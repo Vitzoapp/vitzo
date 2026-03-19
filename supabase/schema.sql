@@ -83,7 +83,10 @@ ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 
 -- Public read for categories and products
+DROP POLICY IF EXISTS "Public Read Categories" ON categories;
 CREATE POLICY "Public Read Categories" ON categories FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public Read Products" ON products;
 CREATE POLICY "Public Read Products" ON products FOR SELECT USING (true);
 
 -- Admin policies (for vitzo.hq@gmail.com)
