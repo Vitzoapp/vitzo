@@ -41,8 +41,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   brandAccent: "#e1b020",
                 },
                 radii: {
-                    buttonRadius: '16px',
-                    inputRadius: '16px',
+                    borderRadiusButton: '16px',
+                    inputBorderRadius: '16px',
                 }
               },
             },
