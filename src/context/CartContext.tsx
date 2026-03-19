@@ -12,7 +12,7 @@ interface CartItem {
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: any) => void;
+  addToCart: (product: CartItem) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;

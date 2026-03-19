@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ShoppingBag, ChevronLeft, Trash2, Plus, Minus, MapPin, CreditCard, CheckCircle2, Zap } from "lucide-react";
 import AuthModal from "@/components/AuthModal";
 import { supabase } from "@/lib/supabase";
+import { User } from "@supabase/supabase-js";
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, totalPrice, totalItems } = useCart();

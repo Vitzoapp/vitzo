@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { LayoutDashboard, Package, Users, Plus, Edit, Trash2, X, CheckCircledIcon as CheckCircle, PlusCircledIcon as PlusCircle } from "lucide-react";
+import { LayoutDashboard, Package, Users, Plus, Edit, Trash2, X } from "lucide-react";
+import { User } from "@supabase/supabase-js";
 import Link from "next/link";
 
 const ADMIN_EMAIL = "vitzo.hq@gmail.com";
@@ -17,7 +18,7 @@ interface Product {
 }
 
 export default function AdminPortal() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard"); // dashboard, products, team
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -318,7 +319,7 @@ export default function AdminPortal() {
   );
 }
 
-function SidebarItem({ icon, label, active, onClick }: { icon: any, label: string, active: boolean, onClick: () => void }) {
+function SidebarItem({ icon, label, active, onClick }: { icon: React.ReactNode, label: string, active: boolean, onClick: () => void }) {
   return (
     <button 
       onClick={onClick}
