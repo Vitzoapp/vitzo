@@ -2,12 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import ProductGrid from "@/components/ProductGrid";
 import { LayoutGrid } from "lucide-react";
 import Link from "next/link";
 
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  interface Category {
+    id: string;
+    slug: string;
+    name: string;
+  }
 
   useEffect(() => {
     const fetchCategories = async () => {

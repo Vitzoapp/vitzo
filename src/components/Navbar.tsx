@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart, User as UserIcon, Search, Menu, LogOut, Settings, Package, MapPin } from "lucide-react";
+import { ShoppingCart, User as UserIcon, Search, Menu, Package, MapPin, Settings } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { useCart } from "@/context/CartContext";
 import { useState, useEffect, useRef } from "react";
@@ -13,6 +13,13 @@ import { useSearch } from "@/context/SearchContext";
 
 const SEARCH_PLACEHOLDERS = ["Search 'tomato'...", "Search 'fresh milk'...", "Search 'organic eggs'...", "Search 'brown bread'...", "Search 'green apples'..."];
 
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image_url?: string;
+}
+
 export default function Navbar() {
   const { totalItems } = useCart();
   const { searchQuery, setSearchQuery } = useSearch();
@@ -20,7 +27,7 @@ export default function Navbar() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [searchIndex, setSearchIndex] = useState(0);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const searchIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -133,7 +140,9 @@ export default function Navbar() {
                     >
                       <div className="h-12 w-12 overflow-hidden rounded-xl bg-gray-100 border border-gray-50">
                         {p.image_url ? (
-                          <img src={p.image_url} alt="" className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                          <div className="relative h-full w-full scale-110 group-hover:scale-125 transition-all duration-500">
+                            <Image src={p.image_url} alt={p.name} fill className="object-cover" />
+                          </div>
                         ) : (
                           <div className="flex h-full w-full items-center justify-center font-black text-xs text-[var(--color-primary-green)]">V</div>
                         )}
@@ -145,7 +154,7 @@ export default function Navbar() {
                     </button>
                   )) : (
                     <div className="p-8 text-center">
-                       <p className="text-sm font-bold text-slate-400 italic">No products found for "{searchQuery}"</p>
+                       <p className="text-sm font-bold text-slate-400 italic">No products found for &quot;{searchQuery}&quot;</p>
                     </div>
                   )}
                 </div>

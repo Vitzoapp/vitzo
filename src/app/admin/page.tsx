@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { LayoutDashboard, Package, Users, Plus, Edit, Trash2, X } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
+import Image from "next/image";
 
 const ADMIN_EMAIL = "vitzo.hq@gmail.com";
 
@@ -216,7 +217,9 @@ export default function AdminPortal() {
                              <div className="flex items-center gap-4">
                                 <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center text-[var(--color-secondary-green)] font-black italic overflow-hidden">
                                   {p.image_url ? (
-                                    <img src={p.image_url} alt="" className="h-full w-full object-cover" />
+                                    <div className="relative h-full w-full">
+                                      <Image src={p.image_url} alt={p.name} fill className="object-cover" />
+                                    </div>
                                   ) : "V"}
                                 </div>
                                 <span className="font-black text-slate-900 text-lg uppercase italic tracking-tighter">{p.name}</span>

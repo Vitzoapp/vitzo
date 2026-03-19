@@ -10,9 +10,24 @@ import { useSearch } from "@/context/SearchContext";
 
 import ProductCard from "@/components/ProductCard";
 
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image_url: string;
+  category_id: string;
+  categories?: { name: string };
+}
+
 export default function Home() {
-  const [categories, setCategories] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const { searchQuery } = useSearch();
 
   useEffect(() => {
@@ -116,7 +131,7 @@ export default function Home() {
       <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 space-y-20">
         {searchQuery ? (
           <div className="space-y-8">
-            <h2 className="text-3xl font-black text-slate-900">Found {filteredProducts.length} products for "{searchQuery}"</h2>
+            <h2 className="text-3xl font-black text-slate-900">Found {filteredProducts.length} products for &quot;{searchQuery}&quot;</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {filteredProducts.map(p => (
                 <ProductCard 

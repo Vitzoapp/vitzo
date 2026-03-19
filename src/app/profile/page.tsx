@@ -2,13 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { User, MapPin, Phone, User as UserIcon, Save, AlertCircle } from "lucide-react";
-import Link from "next/link";
+import { MapPin, Phone, User as UserIcon, Save, AlertCircle } from "lucide-react";
 
 const ALLOWED_AREAS = ["Ramanattukara", "Azhinjilam", "Farook College"];
 
+interface Profile {
+  id: string;
+  full_name: string;
+  mobile_number: string;
+  address: string;
+  area: string;
+}
+
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +47,8 @@ export default function ProfilePage() {
     setSaving(true);
     setError(null);
     setMessage(null);
+
+    if (!profile) return;
 
     if (profile.area && !ALLOWED_AREAS.includes(profile.area)) {
        setError(`Sorry, we currently only deliver to: ${ALLOWED_AREAS.join(", ")}`);
@@ -116,7 +125,7 @@ export default function ProfilePage() {
                   <input
                     type="text"
                     value={profile?.full_name || ""}
-                    onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+                    onChange={(e) => profile && setProfile({ ...profile, full_name: e.target.value })}
                     className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 p-4 text-sm font-bold outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white"
                     placeholder="Enter your name"
                     required
@@ -131,7 +140,7 @@ export default function ProfilePage() {
                   <input
                     type="tel"
                     value={profile?.mobile_number || ""}
-                    onChange={(e) => setProfile({ ...profile, mobile_number: e.target.value })}
+                    onChange={(e) => profile && setProfile({ ...profile, mobile_number: e.target.value })}
                     className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 p-4 text-sm font-bold outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white"
                     placeholder="+91 00000 00000"
                     required
@@ -146,7 +155,7 @@ export default function ProfilePage() {
                 </label>
                 <select
                   value={profile?.area || ""}
-                  onChange={(e) => setProfile({ ...profile, area: e.target.value })}
+                  onChange={(e) => profile && setProfile({ ...profile, area: e.target.value })}
                   className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 p-4 text-sm font-bold outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white appearance-none"
                   required
                 >
@@ -168,7 +177,7 @@ export default function ProfilePage() {
                 </label>
                 <textarea
                   value={profile?.address || ""}
-                  onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+                  onChange={(e) => profile && setProfile({ ...profile, address: e.target.value })}
                   className="w-full h-32 rounded-2xl border-2 border-slate-100 bg-slate-50 p-4 text-sm font-bold outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white resize-none"
                   placeholder="House No, Building, Street..."
                   required

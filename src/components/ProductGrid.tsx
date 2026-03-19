@@ -11,16 +11,16 @@ interface Product {
   price: number;
   image_url: string;
   category_id?: string;
-  categories?: { name: string };
+  categories?: { name: string; slug: string };
 }
 
 interface ProductGridProps {
-  products?: any[];
+  products?: Product[];
   categoryId?: string;
 }
 
 export default function ProductGrid({ products: initialProducts, categoryId }: ProductGridProps) {
-  const [products, setProducts] = useState<any[]>(initialProducts || []);
+  const [products, setProducts] = useState<Product[]>(initialProducts || []);
   const [loading, setLoading] = useState(!initialProducts);
   const { searchQuery } = useSearch();
 

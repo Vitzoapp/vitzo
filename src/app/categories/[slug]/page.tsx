@@ -12,7 +12,13 @@ interface PageProps {
 
 export default function CategoryPage({ params }: PageProps) {
   const { slug } = use(params);
-  const [category, setCategory] = useState<any>(null);
+  const [category, setCategory] = useState<Category | null>(null);
+
+  interface Category {
+    id: string;
+    name: string;
+    slug: string;
+  }
 
   useEffect(() => {
     const fetchCategory = async () => {
