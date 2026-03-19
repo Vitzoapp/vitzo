@@ -1,8 +1,8 @@
 
--- ENABLE UUID EXTENSION
+-- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 1. Create Categories Table
+-- Categories Table
 CREATE TABLE IF NOT EXISTS categories (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS categories (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 2. Create Products Table
+-- 2. Create-- Products Table
 CREATE TABLE IF NOT EXISTS products (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT UNIQUE NOT NULL,
@@ -36,7 +36,7 @@ BEGIN
     END IF; 
 END $$;
 
--- 3. Create Profiles Table (Linked to Auth users)
+-- 3. Create-- Profiles Table (Linked to Auth users)
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name TEXT,
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 4. Create Orders Table
+-- 4. Create-- Orders Table
 CREATE TABLE IF NOT EXISTS orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS orders (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 5. Create Order Items Table
+-- 5. Create-- Order Items Table
 CREATE TABLE IF NOT EXISTS order_items (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
@@ -110,9 +110,16 @@ DROP POLICY IF EXISTS "Users update their own profiles" ON profiles;
 CREATE POLICY "Users update their own profiles" ON profiles FOR UPDATE USING (auth.uid() = id);
 
 -- Admin policies
+DROP POLICY IF EXISTS "Admin manage categories" ON categories;
 CREATE POLICY "Admin manage categories" ON categories FOR ALL TO authenticated USING (auth.jwt() ->> 'email' = 'vitzo.hq@gmail.com');
+
+DROP POLICY IF EXISTS "Admin manage products" ON products;
 CREATE POLICY "Admin manage products" ON products FOR ALL TO authenticated USING (auth.jwt() ->> 'email' = 'vitzo.hq@gmail.com');
+
+DROP POLICY IF EXISTS "Admin manage orders" ON orders;
 CREATE POLICY "Admin manage orders" ON orders FOR ALL TO authenticated USING (auth.jwt() ->> 'email' = 'vitzo.hq@gmail.com');
+
+DROP POLICY IF EXISTS "Admin manage order items" ON order_items;
 CREATE POLICY "Admin manage order items" ON order_items FOR ALL TO authenticated USING (
   EXISTS (
     SELECT 1 FROM orders WHERE orders.id = order_items.order_id AND auth.jwt() ->> 'email' = 'vitzo.hq@gmail.com'
