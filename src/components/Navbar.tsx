@@ -128,7 +128,7 @@ export default function Navbar() {
               onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={isSearchFocused ? "Enter coordinates for fresh goods..." : ""}
-              className="h-14 w-full rounded-[24px] border-2 border-gray-100 bg-gray-50 pl-14 pr-4 text-sm font-black text-slate-900 outline-none transition-all duration-500 focus:border-[var(--color-secondary-green)] focus:bg-white focus:ring-[12px] focus:ring-[var(--color-secondary-green)]/5 placeholder:text-slate-300 placeholder:font-bold italic"
+              className="h-14 w-full rounded-[24px] border-2 border-gray-100 bg-gray-50 pl-14 pr-4 text-sm font-black text-slate-900 outline-none transition-all duration-500 focus:border-[var(--color-secondary-green)] focus:bg-white focus:ring-[12px] focus:ring-[var(--color-secondary-green)]/5 placeholder:text-slate-500 placeholder:font-bold italic"
             />
             {isSearchFocused && searchQuery && (
               <div className="absolute top-full left-0 right-0 mt-3 overflow-hidden rounded-[32px] border border-gray-100 bg-white p-2 shadow-[0_20px_50px_rgba(0,0,0,0.1)] backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-300">

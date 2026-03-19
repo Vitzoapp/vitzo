@@ -126,7 +126,7 @@ export default function ProfilePage() {
                     type="text"
                     value={profile?.full_name || ""}
                     onChange={(e) => profile && setProfile({ ...profile, full_name: e.target.value })}
-                    className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 p-4 text-sm font-bold outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white"
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-900 placeholder:text-slate-500 outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white"
                     placeholder="Enter your name"
                     required
                   />
@@ -141,7 +141,7 @@ export default function ProfilePage() {
                     type="tel"
                     value={profile?.mobile_number || ""}
                     onChange={(e) => profile && setProfile({ ...profile, mobile_number: e.target.value })}
-                    className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 p-4 text-sm font-bold outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white"
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-900 placeholder:text-slate-500 outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white"
                     placeholder="+91 00000 00000"
                     required
                   />
@@ -156,7 +156,7 @@ export default function ProfilePage() {
                 <select
                   value={profile?.area || ""}
                   onChange={(e) => profile && setProfile({ ...profile, area: e.target.value })}
-                  className="w-full rounded-2xl border-2 border-slate-100 bg-slate-50 p-4 text-sm font-bold outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white appearance-none"
+                  className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-900 outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white appearance-none"
                   required
                 >
                   <option value="">Select Area</option>
@@ -178,7 +178,7 @@ export default function ProfilePage() {
                 <textarea
                   value={profile?.address || ""}
                   onChange={(e) => profile && setProfile({ ...profile, address: e.target.value })}
-                  className="w-full h-32 rounded-2xl border-2 border-slate-100 bg-slate-50 p-4 text-sm font-bold outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white resize-none"
+                  className="w-full h-32 rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-900 placeholder:text-slate-500 outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white resize-none"
                   placeholder="House No, Building, Street..."
                   required
                 />
