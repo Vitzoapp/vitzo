@@ -55,9 +55,8 @@ export default function Navbar() {
       searchIntervalRef.current = setInterval(() => {
         setSearchIndex((prev) => (prev + 1) % SEARCH_PLACEHOLDERS.length);
       }, 2000);
-    } else {
-      if (searchIntervalRef.current) clearInterval(searchIntervalRef.current);
     }
+    
     return () => {
       if (searchIntervalRef.current) clearInterval(searchIntervalRef.current);
     };
@@ -105,13 +104,15 @@ export default function Navbar() {
               <Menu className="h-4 w-4 transition-transform group-hover:rotate-180 duration-500" />
               Categories
             </Link>
-            <Link
-              href="/admin"
-              className="flex items-center gap-1.5 rounded-full bg-[var(--color-primary-green)] px-4 py-1.5 text-xs font-black text-white shadow-lg shadow-[var(--color-primary-green)]/20 transition-all hover:scale-105 active:scale-95"
-            >
-              <Settings className="h-3 w-3 animate-spin-slow" />
-              ADMIN CORE
-            </Link>
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-1.5 rounded-full bg-[var(--color-primary-green)] px-4 py-1.5 text-xs font-black text-white shadow-lg shadow-[var(--color-primary-green)]/20 transition-all hover:scale-105 active:scale-95"
+              >
+                <Settings className="h-3 w-3 animate-spin-slow" />
+                ADMIN CORE
+              </Link>
+            )}
           </nav>
         </div>
 
