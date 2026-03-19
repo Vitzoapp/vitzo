@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary-gold: #F5C124;
+  --color-secondary-green: #A3D977;
+  --color-accent-blue: #87CEEB;
+  --color-bg-cream: #FDFBF0;
+  --color-vitzo-text: #1E293B;
+  --font-outfit: var(--font-outfit);
+}
+
+:root {
+  --background: #FDFBF0;
+  --foreground: #1E293B;
+  --primary: #F5C124;
+  --secondary: #A3D977;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f172a;
+    --foreground: #f4f7ff;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-outfit), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.vitzo-gradient {
+  background: linear-gradient(135deg, var(--color-primary-indigo), var(--color-primary-violet));
+}
+
+.vitzo-text-gradient {
+  background: linear-gradient(135deg, var(--color-primary-indigo), var(--color-primary-violet));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
