@@ -1,36 +1,43 @@
+"use client";
+
 import Link from "next/link";
 import { ShoppingBag, Zap, ShieldCheck, MapPin } from "lucide-react";
 import CategorySection from "@/components/CategorySection";
 import CountdownTimer from "@/components/CountdownTimer";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { useSearch } from "@/context/SearchContext";
 
-const MOCK_CATEGORIES = [
-  {
-    title: "Fresh Fruits & Vegetables",
-    slug: "fruits-veg",
-    products: [
-      { id: "f1", name: "Organic Bananas", price: 40, image: "/product-1.png", category: "Produce", rating: 4.8 },
-      { id: "f2", name: "Red Apples", price: 120, image: "/product-1.png", category: "Produce", rating: 4.9 },
-      { id: "f3", name: "Fresh Spinach", price: 20, image: "/product-1.png", category: "Produce", rating: 4.7 },
-      { id: "f4", name: "Carrots (Local)", price: 30, image: "/product-1.png", category: "Produce", rating: 4.5 },
-    ]
-  },
-  {
-    title: "Dairy, Bread & Eggs",
-    slug: "dairy-bread",
-    products: [
-      { id: "d1", name: "Fresh Milk (1L)", price: 60, image: "/product-1.png", category: "Dairy", rating: 4.9 },
-      { id: "d2", name: "Brown Bread", price: 45, image: "/product-1.png", category: "Bakery", rating: 4.8 },
-      { id: "d3", name: "Greek Yogurt", price: 80, image: "/product-1.png", category: "Dairy", rating: 4.7 },
-      { id: "d4", name: "Large Eggs (6pk)", price: 55, image: "/product-1.png", category: "Produce", rating: 4.6 },
-    ]
-  }
-];
+import ProductCard from "@/components/ProductCard";
 
 export default function Home() {
+  const [categories, setCategories] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const { searchQuery } = useSearch();
+
+  useEffect(() => {
+    const fetchHomeData = async () => {
+      const [catRes, prodRes] = await Promise.all([
+        supabase.from('categories').select('*'),
+        supabase.from('products').select('*, categories(name, slug)')
+      ]);
+
+      if (catRes.data) setCategories(catRes.data);
+      if (prodRes.data) setProducts(prodRes.data);
+    };
+
+    fetchHomeData();
+  }, []);
+
+  // Filter products based on search
+  const filteredProducts = products.filter(p => 
+    p.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="flex flex-col min-h-screen bg-white">
       {/* Dynamic Banner Section */}
-      <section className="bg-[var(--color-primary-gold)] pt-8 pb-20 relative overflow-hidden">
+      <section className="bg-[var(--color-primary-green)] pt-8 pb-20 relative overflow-hidden">
         {/* Abstract Background pattern */}
         <div className="absolute top-0 right-0 w-1/3 h-full bg-white/10 skew-x-12 translate-x-1/2" />
         
@@ -39,12 +46,12 @@ export default function Home() {
             <div className="flex flex-col space-y-8 max-w-2xl">
               <CountdownTimer />
               
-              <h1 className="font-outfit text-6xl font-black leading-[0.9] sm:text-8xl text-slate-900 tracking-tighter">
+              <h1 className="font-outfit text-6xl font-black leading-[0.9] sm:text-8xl text-white tracking-tighter">
                 ORDER BY <br />
                 <span className="text-white drop-shadow-2xl">11:00 AM</span>
               </h1>
               
-              <p className="text-2xl font-black text-slate-900/80 italic tracking-tight">
+              <p className="text-2xl font-black text-white/80 italic tracking-tight">
                 For delivery today at <span className="text-white underline decoration-4 decoration-white/50 underline-offset-8">1:00 PM</span>
               </p>
 
@@ -105,16 +112,49 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Category Sections */}
+      {/* Main Content */}
       <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 space-y-20">
-        {MOCK_CATEGORIES.map((cat) => (
-          <CategorySection 
-            key={cat.slug}
-            title={cat.title}
-            category={cat.slug}
-            products={cat.products}
-          />
-        ))}
+        {searchQuery ? (
+          <div className="space-y-8">
+            <h2 className="text-3xl font-black text-slate-900">Found {filteredProducts.length} products for "{searchQuery}"</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {filteredProducts.map(p => (
+                <ProductCard 
+                  key={p.id}
+                  id={p.id}
+                  name={p.name}
+                  price={p.price}
+                  image={p.image_url}
+                  category={p.categories?.name || 'Uncategorized'}
+                />
+              ))}
+            </div>
+            {filteredProducts.length === 0 && (
+              <div className="text-center py-20">
+                <p className="text-2xl font-bold text-slate-400 italic">No products matched your search.</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          categories.map((cat) => {
+            const catProducts = products.filter(p => p.category_id === cat.id);
+            if (catProducts.length === 0) return null;
+            return (
+              <CategorySection 
+                key={cat.id}
+                title={cat.name}
+                category={cat.slug}
+                products={catProducts.map(p => ({
+                  id: p.id,
+                  name: p.name,
+                  price: p.price,
+                  image: p.image_url,
+                  category: cat.name
+                }))}
+              />
+            );
+          })
+        )}
       </main>
     </div>
   );

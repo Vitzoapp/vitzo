@@ -25,8 +25,25 @@ CREATE TABLE profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name TEXT,
   avatar_url TEXT,
+  mobile_number TEXT,
+  address TEXT,
+  area TEXT,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Trigger to create profile on signup
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, avatar_url)
+  VALUES (new.id, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'avatar_url');
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- Orders Table
 CREATE TABLE orders (
@@ -35,6 +52,10 @@ CREATE TABLE orders (
   status TEXT DEFAULT 'pending', -- pending, processing, shipped, delivered, cancelled
   total_amount DECIMAL(10, 2) NOT NULL,
   shipping_address TEXT,
+  shipping_area TEXT,
+  mobile_number TEXT,
+  payment_method TEXT, -- cod, upi
+  payment_status TEXT DEFAULT 'pending', -- pending, completed, failed
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

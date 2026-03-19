@@ -15,6 +15,8 @@ export const metadata: Metadata = {
   description: "Experience the next generation of e-commerce with Vitzo.",
 };
 
+import { SearchProvider } from "@/context/SearchContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -24,9 +26,11 @@ export default function RootLayout({
     <html lang="en" className={`${outfit.variable} h-full antialiased`}>
       <body className="min-h-screen flex flex-col bg-[var(--background)] text-[var(--foreground)]">
         <CartProvider>
-          <Navbar />
-          <main className="flex-grow">{children}</main>
-          <Footer />
+          <SearchProvider>
+            <Navbar />
+            <main className="flex-grow">{children}</main>
+            <Footer />
+          </SearchProvider>
         </CartProvider>
       </body>
     </html>

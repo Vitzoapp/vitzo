@@ -12,70 +12,101 @@ interface Product {
   id: string;
   name: string;
   price: number;
-  category: string;
-  stock: string;
-  image?: string;
+  category_id: string;
+  stock: number;
+  image_url: string;
+  categories?: { name: string };
+}
+
+interface Category {
+  id: string;
+  name: string;
 }
 
 export default function AdminPortal() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("dashboard"); // dashboard, products, team
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  
-  // Local state for products (simulating DB)
-  const [products, setProducts] = useState<Product[]>([
-    { id: "1", name: "Organic Bananas", price: 40, category: "Produce", stock: "45 kgs" },
-    { id: "2", name: "Fresh Milk 1L", price: 60, category: "Dairy", stock: "120 units" },
-    { id: "3", name: "Potato Chips", price: 20, category: "Snacks", stock: "84 pkgs" }
-  ]);
-
-  // Local state for team members
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [team, setTeam] = useState<{email: string, role: string}[]>([
     { email: "vitzo.hq@gmail.com", role: "Owner" }
   ]);
   const [inviteEmail, setInviteEmail] = useState("");
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.email !== ADMIN_EMAIL) {
         setLoading(false);
       } else {
         setUser(session.user);
-        setLoading(false);
+        fetchData();
       }
-    });
+    };
+
+    checkUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        setUser(session?.user ?? null);
+      setUser(session?.user ?? null);
     });
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleAddEditProduct = (e: React.FormEvent<HTMLFormElement>) => {
+  const fetchData = async () => {
+    setLoading(true);
+    const [productsRes, categoriesRes] = await Promise.all([
+      supabase.from('products').select('*, categories(name)').order('created_at', { ascending: false }),
+      supabase.from('categories').select('*')
+    ]);
+
+    if (productsRes.data) setProducts(productsRes.data);
+    if (categoriesRes.data) setCategories(categoriesRes.data);
+    setLoading(false);
+  };
+
+  const handleAddEditProduct = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const productData: Product = {
-      id: editingProduct ? editingProduct.id : Math.random().toString(36).substr(2, 9),
+    const productData = {
       name: formData.get("name") as string,
       price: Number(formData.get("price")),
-      category: formData.get("category") as string,
-      stock: formData.get("stock") as string,
+      category_id: formData.get("category_id") as string,
+      stock: Number(formData.get("stock")),
+      image_url: formData.get("image_url") as string,
     };
 
     if (editingProduct) {
-      setProducts(products.map(p => p.id === editingProduct.id ? productData : p));
+      const { error } = await supabase
+        .from('products')
+        .update(productData)
+        .eq('id', editingProduct.id);
+      
+      if (error) alert(error.message);
     } else {
-      setProducts([...products, productData]);
+      const { error } = await supabase
+        .from('products')
+        .insert([productData]);
+      
+      if (error) alert(error.message);
     }
+
+    fetchData();
     setIsModalOpen(false);
     setEditingProduct(null);
   };
 
-  const handleDeleteProduct = (id: string) => {
+  const handleDeleteProduct = async (id: string) => {
     if (confirm("Are you sure you want to delete this product?")) {
-      setProducts(products.filter(p => p.id !== id));
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+      
+      if (error) alert(error.message);
+      else fetchData();
     }
   };
 
@@ -88,7 +119,7 @@ export default function AdminPortal() {
     }
   };
 
-  if (loading) return <div className="p-20 text-center font-black animate-pulse text-[var(--color-primary-gold)]">SECURE VERIFICATION...</div>;
+  if (loading && !user) return <div className="p-20 text-center font-black animate-pulse text-[var(--color-primary-green)]">SECURE VERIFICATION...</div>;
 
   if (!user || user.email !== ADMIN_EMAIL) {
     return (
@@ -105,7 +136,7 @@ export default function AdminPortal() {
       {/* Sidebar */}
       <aside className="w-64 bg-slate-900 text-white p-8 flex flex-col sticky top-0 h-screen">
           <h1 className="text-2xl font-black italic uppercase mb-12 flex items-center gap-2">
-            <span className="text-[var(--color-primary-gold)]">V</span>-Admin
+            <span className="text-[var(--color-secondary-green)]">V</span>-Admin
             <span className="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded-full NOT-italic tracking-widest font-bold">CORE</span>
           </h1>
           
@@ -133,7 +164,7 @@ export default function AdminPortal() {
           <div className="mt-auto border-t border-white/10 pt-8">
              <p className="text-[10px] font-black uppercase text-slate-500 mb-4">Instance</p>
              <div className="flex items-center gap-3 mb-8">
-                <div className="h-8 w-8 bg-[var(--color-primary-gold)] rounded-full flex items-center justify-center text-slate-900 font-black italic text-xs">A</div>
+                <div className="h-8 w-8 bg-[var(--color-secondary-green)] rounded-full flex items-center justify-center text-slate-900 font-black italic text-xs">A</div>
                 <div className="overflow-hidden">
                    <p className="text-xs font-black truncate">{user.email}</p>
                    <p className="text-[8px] font-bold text-[var(--color-secondary-green)] uppercase">System Active</p>
@@ -160,7 +191,7 @@ export default function AdminPortal() {
                </div>
                <button 
                  onClick={() => { setEditingProduct(null); setIsModalOpen(true); }}
-                 className="bg-[var(--color-primary-gold)] text-slate-900 px-8 py-4 rounded-3xl font-black uppercase text-sm italic shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                 className="bg-[var(--color-secondary-green)] text-white px-8 py-4 rounded-3xl font-black uppercase text-sm italic shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
                >
                   <Plus className="h-5 w-5" />
                   Register Product
@@ -183,19 +214,23 @@ export default function AdminPortal() {
                        <tr key={p.id} className="hover:bg-gray-50/50 transition-colors">
                           <td className="p-8">
                              <div className="flex items-center gap-4">
-                                <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center text-[var(--color-primary-gold)] font-black italic">V</div>
+                                <div className="h-10 w-10 bg-gray-100 rounded-lg flex items-center justify-center text-[var(--color-secondary-green)] font-black italic overflow-hidden">
+                                  {p.image_url ? (
+                                    <img src={p.image_url} alt="" className="h-full w-full object-cover" />
+                                  ) : "V"}
+                                </div>
                                 <span className="font-black text-slate-900 text-lg uppercase italic tracking-tighter">{p.name}</span>
                              </div>
                           </td>
                           <td className="p-8">
-                             <span className="px-4 py-1 bg-white border border-gray-100 rounded-full text-[10px] font-black uppercase text-slate-400">{p.category}</span>
+                             <span className="px-4 py-1 bg-white border border-gray-100 rounded-full text-[10px] font-black uppercase text-slate-400">{p.categories?.name || 'Uncategorized'}</span>
                           </td>
                           <td className="p-8">
-                             <span className={`font-black uppercase italic ${p.stock.includes('0') ? 'text-red-500' : 'text-[var(--color-secondary-green)]'}`}>{p.stock}</span>
+                             <span className={`font-black uppercase italic ${p.stock <= 0 ? 'text-red-500' : 'text-[var(--color-secondary-green)]'}`}>{p.stock} units</span>
                           </td>
                           <td className="p-8 font-black text-slate-900">₹{p.price.toLocaleString()}</td>
                           <td className="p-8 text-right space-x-2">
-                             <button onClick={() => { setEditingProduct(p); setIsModalOpen(true); }} className="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:bg-[var(--color-primary-gold)] hover:text-white transition-all"><Edit className="h-4 w-4" /></button>
+                             <button onClick={() => { setEditingProduct(p); setIsModalOpen(true); }} className="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:bg-[var(--color-secondary-green)] hover:text-white transition-all"><Edit className="h-4 w-4" /></button>
                              <button onClick={() => handleDeleteProduct(p.id)} className="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:bg-red-500 hover:text-white transition-all"><Trash2 className="h-4 w-4" /></button>
                           </td>
                        </tr>
@@ -214,7 +249,7 @@ export default function AdminPortal() {
               </header>
 
               <div className="bg-slate-900 rounded-[40px] p-12 text-white mb-12 shadow-2xl">
-                 <h3 className="text-2xl font-black italic uppercase text-[var(--color-primary-gold)] mb-8">Deploy Invitation</h3>
+                 <h3 className="text-2xl font-black italic uppercase text-[var(--color-secondary-green)] mb-8">Deploy Invitation</h3>
                  <form onSubmit={handleInvite} className="flex gap-4">
                     <input 
                       type="email" 
@@ -224,7 +259,7 @@ export default function AdminPortal() {
                       onChange={(e) => setInviteEmail(e.target.value)}
                       required
                     />
-                    <button type="submit" className="bg-[var(--color-primary-gold)] text-slate-900 px-10 py-4 rounded-3xl font-black uppercase italic shadow-lg hover:scale-105 active:scale-95 transition-all">
+                    <button type="submit" className="bg-[var(--color-secondary-green)] text-white px-10 py-4 rounded-3xl font-black uppercase italic shadow-lg hover:scale-105 active:scale-95 transition-all">
                        Send Pulse
                     </button>
                  </form>
@@ -267,7 +302,7 @@ export default function AdminPortal() {
                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-4">Product Nomenclature</label>
                    <input 
                      name="name" 
-                     className="w-full px-8 py-4 bg-gray-50 border border-gray-100 rounded-3xl font-bold outline-none focus:bg-white focus:border-[var(--color-primary-gold)] transition-all" 
+                     className="w-full px-8 py-4 bg-gray-50 border border-gray-100 rounded-3xl font-bold outline-none focus:bg-white focus:border-[var(--color-secondary-green)] transition-all" 
                      defaultValue={editingProduct?.name} 
                      required 
                    />
@@ -278,7 +313,7 @@ export default function AdminPortal() {
                       <input 
                         name="price" 
                         type="number" 
-                        className="w-full px-8 py-4 bg-gray-50 border border-gray-100 rounded-3xl font-bold outline-none focus:bg-white focus:border-[var(--color-primary-gold)] transition-all" 
+                        className="w-full px-8 py-4 bg-gray-50 border border-gray-100 rounded-3xl font-bold outline-none focus:bg-white focus:border-[var(--color-secondary-green)] transition-all" 
                         defaultValue={editingProduct?.price} 
                         required 
                       />
@@ -286,27 +321,40 @@ export default function AdminPortal() {
                    <div className="space-y-2">
                       <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-4">Classification</label>
                       <select 
-                        name="category" 
-                        className="w-full px-8 py-4 bg-gray-50 border border-gray-100 rounded-3xl font-bold outline-none focus:bg-white focus:border-[var(--color-primary-gold)] transition-all appearance-none" 
-                        defaultValue={editingProduct?.category}
+                        name="category_id" 
+                        className="w-full px-8 py-4 bg-gray-50 border border-gray-100 rounded-3xl font-bold outline-none focus:bg-white focus:border-[var(--color-secondary-green)] transition-all appearance-none" 
+                        defaultValue={editingProduct?.category_id}
+                        required
                       >
-                         <option>Produce</option>
-                         <option>Dairy</option>
-                         <option>Snacks</option>
-                         <option>Bakery</option>
-                         <option>Beverages</option>
+                         <option value="">Select Category</option>
+                         {categories.map(cat => (
+                           <option key={cat.id} value={cat.id}>{cat.name}</option>
+                         ))}
                       </select>
                    </div>
                 </div>
-                <div className="space-y-2">
-                   <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-4">Stock Level Detail</label>
-                   <input 
-                     name="stock" 
-                     className="w-full px-8 py-4 bg-gray-50 border border-gray-100 rounded-3xl font-bold outline-none focus:bg-white focus:border-[var(--color-primary-gold)] transition-all" 
-                     placeholder="e.g., 50 units, 20 kgs" 
-                     defaultValue={editingProduct?.stock} 
-                     required 
-                   />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-4">Stock Level</label>
+                    <input 
+                      name="stock" 
+                      type="number"
+                      className="w-full px-8 py-4 bg-gray-50 border border-gray-100 rounded-3xl font-bold outline-none focus:bg-white focus:border-[var(--color-secondary-green)] transition-all" 
+                      placeholder="e.g., 50" 
+                      defaultValue={editingProduct?.stock} 
+                      required 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-4">Image URL</label>
+                    <input 
+                      name="image_url" 
+                      className="w-full px-8 py-4 bg-gray-50 border border-gray-100 rounded-3xl font-bold outline-none focus:bg-white focus:border-[var(--color-secondary-green)] transition-all" 
+                      placeholder="https://..." 
+                      defaultValue={editingProduct?.image_url} 
+                      required 
+                    />
+                  </div>
                 </div>
                 <button type="submit" className="w-full bg-slate-900 text-white py-6 rounded-3xl font-black uppercase italic tracking-widest mt-8 hover:scale-105 transition-transform shadow-2xl">
                    Synchronize Data
@@ -325,7 +373,7 @@ function SidebarItem({ icon, label, active, onClick }: { icon: React.ReactNode, 
       onClick={onClick}
       className={`flex items-center gap-4 w-full p-5 rounded-[20px] font-black uppercase text-[11px] italic transition-all group ${active ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-500 hover:bg-white/5 hover:text-white'}`}
     >
-      <div className={`${active ? 'text-[var(--color-primary-gold)]' : 'text-slate-500 group-hover:text-white'} transition-colors`}>
+      <div className={`${active ? 'text-[var(--color-secondary-green)]' : 'text-slate-500 group-hover:text-white'} transition-colors`}>
          {icon}
       </div>
       {label}

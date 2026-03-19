@@ -10,7 +10,7 @@ interface Product {
   price: number;
   image: string;
   category: string;
-  rating: number;
+  rating?: number;
 }
 
 interface CategorySectionProps {
@@ -24,12 +24,12 @@ export default function CategorySection({ title, category, products }: CategoryS
     <section className="py-8">
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-outfit text-2xl font-black text-slate-900 flex items-center gap-2">
-          <span className="h-8 w-1.5 bg-[var(--color-primary-gold)] rounded-full" />
+          <span className="h-8 w-1.5 bg-[var(--color-primary-green)] rounded-full" />
           {title}
         </h2>
         <Link 
           href={`/categories/${category}`}
-          className="flex items-center gap-1 text-sm font-bold text-[var(--color-primary-gold)] hover:underline"
+          className="flex items-center gap-1 text-sm font-bold text-[var(--color-primary-green)] hover:underline"
         >
           See All
           <ChevronRight className="h-4 w-4" />

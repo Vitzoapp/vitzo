@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary-gold: #F5C124;
-  --color-secondary-green: #A3D977;
-  --color-accent-blue: #87CEEB;
+  --color-primary-green: #064E3B; /* Emerald 900 */
+  --color-secondary-green: #10B981; /* Emerald 500 */
+  --color-accent-gold: #F5C124;
   --color-bg-cream: #FDFBF0;
-  --color-vitzo-text: #1E293B;
+  --color-vitzo-text: #064E3B;
   --font-outfit: var(--font-outfit);
 }
 
 :root {
   --background: #FDFBF0;
-  --foreground: #1E293B;
-  --primary: #F5C124;
-  --secondary: #A3D977;
+  --foreground: #064E3B;
+  --primary: #064E3B;
+  --secondary: #10B981;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -36,7 +36,26 @@ body {
 }
 
 .vitzo-text-gradient {
-  background: linear-gradient(135deg, var(--color-primary-gold), var(--color-secondary-green));
+  background: linear-gradient(135deg, var(--color-primary-green), var(--color-secondary-green));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s ease-in-out infinite;
 }
