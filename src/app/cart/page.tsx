@@ -214,8 +214,8 @@ export default function CartPage() {
                    Delivery Address
                  </h2>
                  <div className="space-y-6">
-                    {profile?.address ? (
-                      <div className={`p-8 border-2 rounded-[32px] relative transition-all ${isAreaAllowed ? 'border-[var(--color-primary-green)] bg-emerald-50/30' : 'border-red-200 bg-red-50/30'}`}>
+                     {profile?.house_no ? (
+                       <div className={`p-8 border-2 rounded-[32px] relative transition-all ${isAreaAllowed ? 'border-[var(--color-primary-green)] bg-emerald-50/30' : 'border-red-200 bg-red-50/30'}`}>
                         {isAreaAllowed ? (
                           <div className="absolute top-6 right-6 h-8 w-8 bg-[var(--color-primary-green)] rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200 animate-in zoom-in duration-500">
                              <CheckCircle2 className="h-5 w-5 text-white" />
