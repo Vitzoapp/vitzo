@@ -5,10 +5,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ShoppingBag, ChevronLeft, Trash2, Plus, Minus, MapPin, CreditCard, CheckCircle2, Zap } from "lucide-react";
-import AuthModal from "@/components/AuthModal";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 
+import { useRouter, useSearchParams } from "next/navigation";
 interface Profile {
   id: string;
   full_name: string;
@@ -19,7 +19,8 @@ interface Profile {
 
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, totalPrice, totalItems, clearCart } = useCart();
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [step, setStep] = useState(1); // 1: Cart, 2: Address, 3: Payment, 4: Done
@@ -54,10 +55,10 @@ export default function CartPage() {
 
   const handleCheckout = () => {
     if (!user) {
-      setIsAuthModalOpen(true);
-    } else {
-      setStep(2);
+      router.push(`/login?next=${encodeURIComponent('/cart')}`);
+      return;
     }
+    setStep(2);
   };
 
   const handlePlaceOrder = async () => {
@@ -367,10 +368,6 @@ export default function CartPage() {
         </div>
       </div>
 
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
-      />
     </div>
   );
 }

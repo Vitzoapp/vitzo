@@ -49,7 +49,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   <p className="text-slate-500">Your cart is empty</p>
                   <button 
                     onClick={onClose}
-                    className="font-bold text-[var(--color-primary-indigo)] hover:underline"
+                    className="font-black uppercase text-xs tracking-widest text-[var(--color-secondary-green)] hover:underline"
                   >
                     Continue Shopping
                   </button>

@@ -10,7 +10,7 @@ CREATE TABLE categories (
 -- Products Table
 CREATE TABLE products (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name TEXT NOT NULL,
+  name TEXT UNIQUE NOT NULL,
   description TEXT,
   price DECIMAL(10, 2) NOT NULL,
   image_url TEXT,

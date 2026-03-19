@@ -75,11 +75,11 @@ export default function ProductCard({
         <h3 className="font-outfit text-xl font-bold text-slate-900 group-hover:text-[var(--color-primary-green)] transition-colors line-clamp-1">
           {name}
         </h3>
-        <p className="mt-1 text-xs font-bold text-slate-400 uppercase tracking-wider">Premium Selection</p>
+        <p className="mt-1 text-xs font-black text-slate-600 uppercase tracking-widest italic">V-Fresh Premium</p>
 
         <div className="mt-6 flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-[10px] font-black uppercase text-slate-400 leading-none mb-1">Price</span>
+            <span className="text-[10px] font-black uppercase text-slate-600 leading-none mb-1">Standard Rate</span>
             <div className="text-2xl font-black text-slate-900 tracking-tighter">
               ₹{price.toLocaleString("en-IN")}
             </div>

@@ -7,8 +7,6 @@ import type { User } from "@supabase/supabase-js";
 import { useCart } from "@/context/CartContext";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import AuthModal from "./AuthModal";
-
 import { useSearch } from "@/context/SearchContext";
 
 const SEARCH_PLACEHOLDERS = ["Search 'tomato'...", "Search 'fresh milk'...", "Search 'organic eggs'...", "Search 'brown bread'...", "Search 'green apples'..."];
@@ -24,7 +22,6 @@ export default function Navbar() {
   const { totalItems } = useCart();
   const { searchQuery, setSearchQuery } = useSearch();
   const [user, setUser] = useState<User | null>(null);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [searchIndex, setSearchIndex] = useState(0);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
@@ -77,15 +74,11 @@ export default function Navbar() {
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <div className="flex items-center gap-12">
-          <Link href="/" className="flex items-center transition-transform hover:scale-105 active:scale-95">
-            <Image 
-              src="/vitzo.png" 
-              alt="Vitzo Logo" 
-              width={120} 
-              height={40} 
-              className="h-10 w-auto object-contain"
-              priority
-            />
+          <Link href="/" className="group flex items-center gap-1 transition-transform hover:scale-105 active:scale-95">
+            <span className="text-3xl font-black italic tracking-tighter uppercase text-slate-900 group-hover:text-[var(--color-primary-green)] transition-colors">
+              <span className="text-[var(--color-primary-green)]">V</span>ITZO
+            </span>
+            <div className="h-1.5 w-1.5 rounded-full bg-[var(--color-secondary-green)] mt-3 animate-pulse" />
           </Link>
 
           {/* Nav Links - Desktop */}
@@ -117,21 +110,29 @@ export default function Navbar() {
         </div>
 
         {/* Search Bar */}
-        <div className="hidden flex-1 max-w-md mx-8 lg:block">
+        <div className="hidden flex-1 max-w-lg mx-8 lg:block">
           <div className="relative group">
-            <Search className={`absolute left-4 h-5 w-5 transition-colors duration-300 ${isSearchFocused ? 'text-[var(--color-secondary-green)]' : 'text-slate-400'}`} />
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center z-10">
+              <div className={`absolute h-9 w-9 rounded-full border-2 border-dashed border-[var(--color-secondary-green)]/40 animate-spin-slow transition-all duration-500 ${isSearchFocused ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`} />
+              <Search className={`h-5 w-5 transition-colors duration-300 ${isSearchFocused ? 'text-[var(--color-secondary-green)]' : 'text-slate-400'}`} />
+            </div>
+            
+            <label className={`absolute left-12 transition-all duration-500 pointer-events-none z-10 ${isSearchFocused || searchQuery ? '-top-2.5 left-6 bg-white px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-secondary-green)] shadow-sm' : 'top-1/2 -translate-y-1/2 text-sm font-black uppercase tracking-widest text-slate-400'}`}>
+              Inventory Network
+            </label>
+
             <input
               type="text"
               value={searchQuery}
               onFocus={() => setIsSearchFocused(true)}
               onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={isSearchFocused ? "What are you looking for?" : SEARCH_PLACEHOLDERS[searchIndex]}
-              className="h-12 w-full rounded-2xl border-2 border-gray-100 bg-gray-50 pl-12 pr-4 text-sm font-bold outline-none transition-all duration-300 focus:border-[var(--color-secondary-green)] focus:bg-white focus:ring-4 focus:ring-[var(--color-secondary-green)]/10"
+              placeholder={isSearchFocused ? "Enter coordinates for fresh goods..." : ""}
+              className="h-14 w-full rounded-[24px] border-2 border-gray-100 bg-gray-50 pl-14 pr-4 text-sm font-black text-slate-900 outline-none transition-all duration-500 focus:border-[var(--color-secondary-green)] focus:bg-white focus:ring-[12px] focus:ring-[var(--color-secondary-green)]/5 placeholder:text-slate-300 placeholder:font-bold italic"
             />
             {isSearchFocused && searchQuery && (
               <div className="absolute top-full left-0 right-0 mt-3 overflow-hidden rounded-[32px] border border-gray-100 bg-white p-2 shadow-[0_20px_50px_rgba(0,0,0,0.1)] backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-300">
-                <p className="p-4 text-[10px] font-black uppercase tracking-widest text-slate-400 italic">Matching Results</p>
+                <p className="p-4 text-[10px] font-black uppercase tracking-widest text-slate-700 italic border-b border-slate-50">Pulse Synchronized Results</p>
                 <div className="space-y-1">
                   {filteredProducts.length > 0 ? filteredProducts.map((p) => (
                     <button 
@@ -181,13 +182,13 @@ export default function Navbar() {
                 </div>
               </Link>
             ) : (
-              <button 
-                onClick={() => setIsAuthModalOpen(true)}
+              <Link 
+                href="/login"
                 className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-50 text-slate-600 transition-all hover:bg-[var(--color-primary-green)] hover:text-white hover:shadow-lg hover:shadow-[var(--color-primary-green)]/20 active:scale-95"
                 title="Login"
               >
                 <UserIcon className="h-5 w-5" />
-              </button>
+              </Link>
             )}
             
             <Link
@@ -208,7 +209,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </header>
   );
 }

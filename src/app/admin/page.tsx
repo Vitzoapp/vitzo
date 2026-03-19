@@ -302,30 +302,30 @@ export default function AdminPortal() {
              </h2>
              <form onSubmit={handleAddEditProduct} className="space-y-6">
                 <div className="space-y-2">
-                   <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-4">Product Nomenclature</label>
+                   <label className="text-[11px] font-black uppercase text-slate-900 tracking-widest ml-4">Product Nomenclature</label>
                    <input 
                      name="name" 
-                     className="w-full px-8 py-4 bg-slate-100 border-2 border-slate-200 rounded-3xl font-bold outline-none focus:bg-white focus:border-[var(--color-secondary-green)] transition-all" 
+                     className="w-full px-8 py-4 bg-slate-100 border-2 border-slate-200 rounded-3xl font-bold text-slate-900 outline-none focus:bg-white focus:border-[var(--color-secondary-green)] transition-all" 
                      defaultValue={editingProduct?.name} 
                      required 
                    />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-4">Price (INR)</label>
+                      <label className="text-[11px] font-black uppercase text-slate-900 tracking-widest ml-4">Price (INR)</label>
                       <input 
                         name="price" 
                         type="number" 
-                        className="w-full px-8 py-4 bg-slate-100 border-2 border-slate-200 rounded-3xl font-bold outline-none focus:bg-white focus:border-[var(--color-secondary-green)] transition-all" 
+                        className="w-full px-8 py-4 bg-slate-100 border-2 border-slate-200 rounded-3xl font-bold text-slate-900 outline-none focus:bg-white focus:border-[var(--color-secondary-green)] transition-all" 
                         defaultValue={editingProduct?.price} 
                         required 
                       />
                    </div>
                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-4">Classification</label>
+                      <label className="text-[11px] font-black uppercase text-slate-900 tracking-widest ml-4">Classification</label>
                       <select 
                         name="category_id" 
-                        className="w-full px-8 py-4 bg-slate-100 border-2 border-slate-200 rounded-3xl font-bold outline-none focus:bg-white focus:border-[var(--color-secondary-green)] transition-all appearance-none" 
+                        className="w-full px-8 py-4 bg-slate-100 border-2 border-slate-200 rounded-3xl font-bold text-slate-900 outline-none focus:bg-white focus:border-[var(--color-secondary-green)] transition-all appearance-none" 
                         defaultValue={editingProduct?.category_id}
                         required
                       >
@@ -338,18 +338,18 @@ export default function AdminPortal() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-4">Stock Level</label>
+                    <label className="text-[11px] font-black uppercase text-slate-900 tracking-widest ml-4">Stock Level</label>
                     <input 
                       name="stock" 
                       type="number"
-                      className="w-full px-8 py-4 bg-slate-100 border-2 border-slate-200 rounded-3xl font-bold outline-none focus:bg-white focus:border-[var(--color-secondary-green)] transition-all" 
+                      className="w-full px-8 py-4 bg-slate-100 border-2 border-slate-200 rounded-3xl font-bold text-slate-900 outline-none focus:bg-white focus:border-[var(--color-secondary-green)] transition-all" 
                       placeholder="e.g., 50" 
                       defaultValue={editingProduct?.stock} 
                       required 
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-4">Image URL</label>
+                    <label className="text-[11px] font-black uppercase text-slate-700 tracking-widest ml-4">Image URL</label>
                     <input 
                       name="image_url" 
                       className="w-full px-8 py-4 bg-gray-50 border border-gray-100 rounded-3xl font-bold outline-none focus:bg-white focus:border-[var(--color-secondary-green)] transition-all" 

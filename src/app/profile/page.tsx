@@ -118,7 +118,7 @@ export default function ProfilePage() {
 
               <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 italic flex items-center gap-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-800 italic flex items-center gap-2">
                     <UserIcon className="h-3 w-3" />
                     Full Name
                   </label>
@@ -133,7 +133,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 italic flex items-center gap-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-800 italic flex items-center gap-2">
                     <Phone className="h-3 w-3" />
                     Mobile Number
                   </label>
@@ -149,7 +149,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 italic flex items-center gap-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-800 italic flex items-center gap-2">
                   <MapPin className="h-3 w-3" />
                   Delivery Area
                 </label>
@@ -171,7 +171,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 italic flex items-center gap-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-800 italic flex items-center gap-2">
                   <MapPin className="h-3 w-3" />
                   Detailed Address
                 </label>
