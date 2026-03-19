@@ -13,7 +13,7 @@ export default function CountdownTimer() {
       const hours = now.getHours();
       const minutes = now.getMinutes();
 
-      let targetTime = new Date();
+      const targetTime = new Date();
       let batchLabel = "";
       let deliveryTime = "";
 

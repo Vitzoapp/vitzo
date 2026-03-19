@@ -38,7 +38,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("vitzo-cart", JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (product: any) => {
+  const addToCart = (product: CartItem) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id);
       if (existing) {

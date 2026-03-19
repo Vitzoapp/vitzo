@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShoppingBag, Zap, Clock, ShieldCheck, MapPin } from "lucide-react";
+import { ShoppingBag, Zap, ShieldCheck, MapPin } from "lucide-react";
 import CategorySection from "@/components/CategorySection";
 import CountdownTimer from "@/components/CountdownTimer";
 

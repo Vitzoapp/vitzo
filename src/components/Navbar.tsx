@@ -9,7 +9,7 @@ import AuthModal from "./AuthModal";
 
 export default function Navbar() {
   const { totalItems } = useCart();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   useEffect(() => {

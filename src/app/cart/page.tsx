@@ -11,7 +11,7 @@ import { User } from "@supabase/supabase-js";
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, totalPrice, totalItems } = useCart();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [step, setStep] = useState(1); // 1: Cart, 2: Address, 3: Payment, 4: Done
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export default function CartPage() {
           <ShoppingBag className="h-24 w-24 text-[var(--color-primary-gold)]" />
         </div>
         <h1 className="text-4xl font-black text-slate-900 mb-4 italic uppercase">Your Cart is Empty</h1>
-        <p className="text-slate-400 font-bold mb-8">Looks like you haven't added any groceries yet.</p>
+        <p className="text-slate-400 font-bold mb-8">Looks like you haven&apos;t added any groceries yet.</p>
         <Link 
           href="/"
           className="bg-slate-900 text-white px-10 py-4 rounded-3xl font-black uppercase tracking-widest hover:scale-105 transition-transform"

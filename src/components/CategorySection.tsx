@@ -4,10 +4,19 @@ import ProductCard from "./ProductCard";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  category: string;
+  rating: number;
+}
+
 interface CategorySectionProps {
   title: string;
   category: string;
-  products: any[];
+  products: Product[];
 }
 
 export default function CategorySection({ title, category, products }: CategorySectionProps) {
