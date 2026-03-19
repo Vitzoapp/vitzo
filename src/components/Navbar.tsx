@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingCart, User as UserIcon, Search, Menu, LogOut, Settings } from "lucide-react";
-import { User } from "@supabase/supabase-js";
+import { ShoppingCart, User, Search, Menu, LogOut, Settings } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
 import { useCart } from "@/context/CartContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";

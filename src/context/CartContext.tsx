@@ -7,12 +7,13 @@ interface CartItem {
   name: string;
   price: number;
   image: string;
+  category: string;
   quantity: number;
 }
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: CartItem) => void;
+  addToCart: (product: Omit<CartItem, 'quantity'>) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -38,7 +39,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("vitzo-cart", JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (product: CartItem) => {
+  const addToCart = (product: Omit<CartItem, 'quantity'>) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id);
       if (existing) {
