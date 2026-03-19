@@ -6,8 +6,10 @@ import { Clock } from "lucide-react";
 export default function CountdownTimer() {
   const [timeLeft, setTimeLeft] = useState("");
   const [currentBatch, setCurrentBatch] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     const timer = setInterval(() => {
       const now = new Date();
       const hours = now.getHours();
@@ -46,6 +48,15 @@ export default function CountdownTimer() {
 
     return () => clearInterval(timer);
   }, []);
+
+  if (!isMounted) {
+    return (
+      <div className="flex flex-col space-y-4 opacity-0">
+        <div className="h-10 w-48 bg-white/10 rounded-full animate-pulse" />
+        <div className="h-20 w-64 bg-white/10 rounded-3xl animate-pulse" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col space-y-4">

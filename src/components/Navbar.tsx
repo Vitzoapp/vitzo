@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingCart, User, Search, Menu, LogOut, Settings } from "lucide-react";
+import { ShoppingCart, User as UserIcon, Search, Menu, LogOut, Settings } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { useCart } from "@/context/CartContext";
 import { useState, useEffect } from "react";
@@ -101,7 +101,7 @@ export default function Navbar() {
                 className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-50 text-slate-600 transition-colors hover:bg-[var(--color-primary-gold)] hover:text-slate-900"
                 title="Login"
               >
-                <User className="h-5 w-5" />
+                <UserIcon className="h-5 w-5" />
               </button>
             )}
             

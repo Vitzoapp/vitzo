@@ -32,11 +32,11 @@ body {
 }
 
 .vitzo-gradient {
-  background: linear-gradient(135deg, var(--color-primary-indigo), var(--color-primary-violet));
+  background: linear-gradient(135deg, var(--color-primary-gold), var(--color-secondary-green));
 }
 
 .vitzo-text-gradient {
-  background: linear-gradient(135deg, var(--color-primary-indigo), var(--color-primary-violet));
+  background: linear-gradient(135deg, var(--color-primary-gold), var(--color-secondary-green));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
