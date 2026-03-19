@@ -1,5 +1,8 @@
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- Categories Table
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
   slug TEXT UNIQUE NOT NULL,
@@ -8,7 +11,7 @@ CREATE TABLE categories (
 );
 
 -- Products Table
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT UNIQUE NOT NULL,
   description TEXT,
@@ -21,7 +24,7 @@ CREATE TABLE products (
 );
 
 -- Profiles Table (Linked to Auth users)
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name TEXT,
   avatar_url TEXT,
@@ -48,7 +51,7 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- Orders Table
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   status TEXT DEFAULT 'pending', -- pending, processing, shipped, delivered, cancelled
@@ -64,7 +67,7 @@ CREATE TABLE orders (
 );
 
 -- Order Items Table
-CREATE TABLE order_items (
+CREATE TABLE IF NOT EXISTS order_items (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
   product_id UUID REFERENCES products(id) ON DELETE SET NULL,
@@ -84,9 +87,16 @@ CREATE POLICY "Public Read Categories" ON categories FOR SELECT USING (true);
 CREATE POLICY "Public Read Products" ON products FOR SELECT USING (true);
 
 -- Admin policies (for vitzo.hq@gmail.com)
+DROP POLICY IF EXISTS "Admin manage categories" ON categories;
 CREATE POLICY "Admin manage categories" ON categories FOR ALL TO authenticated USING (auth.jwt() ->> 'email' = 'vitzo.hq@gmail.com');
+
+DROP POLICY IF EXISTS "Admin manage products" ON products;
 CREATE POLICY "Admin manage products" ON products FOR ALL TO authenticated USING (auth.jwt() ->> 'email' = 'vitzo.hq@gmail.com');
+
+DROP POLICY IF EXISTS "Admin manage orders" ON orders;
 CREATE POLICY "Admin manage orders" ON orders FOR ALL TO authenticated USING (auth.jwt() ->> 'email' = 'vitzo.hq@gmail.com');
+
+DROP POLICY IF EXISTS "Admin manage order items" ON order_items;
 CREATE POLICY "Admin manage order items" ON order_items FOR ALL TO authenticated USING (
   EXISTS (
     SELECT 1 FROM orders WHERE orders.id = order_items.order_id AND auth.jwt() ->> 'email' = 'vitzo.hq@gmail.com'
