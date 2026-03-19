@@ -83,17 +83,12 @@ ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public Read Categories" ON categories FOR SELECT USING (true);
 CREATE POLICY "Public Read Products" ON products FOR SELECT USING (true);
 
--- Profiles: Users can read/write their own profiles
-CREATE POLICY "Users view their own profiles" ON profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Users update their own profiles" ON profiles FOR UPDATE USING (auth.uid() = id);
-
--- Orders: Users can view their own orders
-CREATE POLICY "Users view their own orders" ON orders FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users insert their own orders" ON orders FOR INSERT WITH CHECK (auth.uid() = user_id);
-
--- Order Items: Users can view their own order items
-CREATE POLICY "Users view their own order items" ON order_items FOR SELECT USING (
+-- Admin policies (for vitzo.hq@gmail.com)
+CREATE POLICY "Admin manage categories" ON categories FOR ALL TO authenticated USING (auth.jwt() ->> 'email' = 'vitzo.hq@gmail.com');
+CREATE POLICY "Admin manage products" ON products FOR ALL TO authenticated USING (auth.jwt() ->> 'email' = 'vitzo.hq@gmail.com');
+CREATE POLICY "Admin manage orders" ON orders FOR ALL TO authenticated USING (auth.jwt() ->> 'email' = 'vitzo.hq@gmail.com');
+CREATE POLICY "Admin manage order items" ON order_items FOR ALL TO authenticated USING (
   EXISTS (
-    SELECT 1 FROM orders WHERE orders.id = order_items.order_id AND orders.user_id = auth.uid()
+    SELECT 1 FROM orders WHERE orders.id = order_items.order_id AND auth.jwt() ->> 'email' = 'vitzo.hq@gmail.com'
   )
 );

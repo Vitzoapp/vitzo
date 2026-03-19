@@ -109,6 +109,16 @@ CREATE POLICY "Users view their own profiles" ON profiles FOR SELECT USING (auth
 DROP POLICY IF EXISTS "Users update their own profiles" ON profiles;
 CREATE POLICY "Users update their own profiles" ON profiles FOR UPDATE USING (auth.uid() = id);
 
+-- Admin policies
+CREATE POLICY "Admin manage categories" ON categories FOR ALL TO authenticated USING (auth.jwt() ->> 'email' = 'vitzo.hq@gmail.com');
+CREATE POLICY "Admin manage products" ON products FOR ALL TO authenticated USING (auth.jwt() ->> 'email' = 'vitzo.hq@gmail.com');
+CREATE POLICY "Admin manage orders" ON orders FOR ALL TO authenticated USING (auth.jwt() ->> 'email' = 'vitzo.hq@gmail.com');
+CREATE POLICY "Admin manage order items" ON order_items FOR ALL TO authenticated USING (
+  EXISTS (
+    SELECT 1 FROM orders WHERE orders.id = order_items.order_id AND auth.jwt() ->> 'email' = 'vitzo.hq@gmail.com'
+  )
+);
+
 DROP POLICY IF EXISTS "Users view their own orders" ON orders;
 CREATE POLICY "Users view their own orders" ON orders FOR SELECT USING (auth.uid() = user_id);
 
