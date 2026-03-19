@@ -8,7 +8,7 @@ import { ShoppingBag, ChevronLeft, Trash2, Plus, Minus, MapPin, CreditCard, Chec
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 interface Profile {
   id: string;
   full_name: string;
@@ -20,7 +20,6 @@ interface Profile {
 export default function CartPage() {
   const { cart, removeFromCart, updateQuantity, totalPrice, totalItems, clearCart } = useCart();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [step, setStep] = useState(1); // 1: Cart, 2: Address, 3: Payment, 4: Done

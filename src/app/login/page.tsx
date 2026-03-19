@@ -6,17 +6,19 @@ import { supabase } from "@/lib/supabase";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/";
   const [origin, setOrigin] = useState("");
 
   useEffect(() => {
-    setOrigin(window.location.origin);
+    if (typeof window !== "undefined") {
+      setOrigin(window.location.origin);
+    }
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
@@ -45,7 +47,12 @@ export default function LoginPage() {
             <div className="bg-white rounded-[48px] shadow-2xl shadow-slate-200 border border-gray-100 p-10 sm:p-20 relative overflow-hidden">
                 <div className="mb-12 text-center">
                     <div className="flex justify-center mb-8">
-                        <Image src="/vitzo.png" alt="Vitzo" width={140} height={50} className="h-12 w-auto object-contain" />
+                        <Link href="/" className="group flex items-center gap-1 transition-transform hover:scale-105 active:scale-95">
+                          <span className="text-4xl font-black italic tracking-tighter uppercase text-slate-900 group-hover:text-[var(--color-primary-green)] transition-colors">
+                            <span className="text-[var(--color-primary-green)]">V</span>ITZO
+                          </span>
+                          <div className="h-2 w-2 rounded-full bg-[var(--color-secondary-green)] mt-4 animate-pulse" />
+                        </Link>
                     </div>
                     <h1 className="text-4xl font-black text-slate-900 italic font-outfit uppercase tracking-tighter leading-none mb-4">
                         <span className="text-[var(--color-primary-gold)]">V</span>itzo identity
@@ -87,5 +94,17 @@ export default function LoginPage() {
             </div>
         </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-[var(--color-primary-green)] border-t-transparent" />
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }
