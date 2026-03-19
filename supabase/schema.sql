@@ -26,7 +26,9 @@ CREATE TABLE profiles (
   full_name TEXT,
   avatar_url TEXT,
   mobile_number TEXT,
-  address TEXT,
+  house_no TEXT,
+  street TEXT,
+  landmark TEXT,
   area TEXT,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -51,7 +53,9 @@ CREATE TABLE orders (
   user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   status TEXT DEFAULT 'pending', -- pending, processing, shipped, delivered, cancelled
   total_amount DECIMAL(10, 2) NOT NULL,
-  shipping_address TEXT,
+  shipping_house_no TEXT,
+  shipping_street TEXT,
+  shipping_landmark TEXT,
   shipping_area TEXT,
   mobile_number TEXT,
   payment_method TEXT, -- cod, upi

@@ -10,11 +10,14 @@ interface Profile {
   id: string;
   full_name: string;
   mobile_number: string;
-  address: string;
+  house_no: string;
+  street: string;
+  landmark: string;
   area: string;
 }
 
 export default function ProfilePage() {
+  const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -28,6 +31,7 @@ export default function ProfilePage() {
         window.location.href = "/";
         return;
       }
+      setUser(session.user);
 
       const { data, error } = await supabase
         .from("profiles")
@@ -61,7 +65,9 @@ export default function ProfilePage() {
       .update({
         full_name: profile.full_name,
         mobile_number: profile.mobile_number,
-        address: profile.address,
+        house_no: profile.house_no,
+        street: profile.street,
+        landmark: profile.landmark,
         area: profile.area,
         updated_at: new Date().toISOString(),
       })
@@ -88,14 +94,14 @@ export default function ProfilePage() {
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <div className="overflow-hidden rounded-[40px] bg-white shadow-2xl shadow-slate-200">
           {/* Header */}
-          <div className="bg-[var(--color-primary-green)] p-12 text-white">
+          <div className="bg-gradient-to-br from-[var(--color-primary-green)] to-[var(--color-secondary-green)] p-12 text-white">
             <div className="flex items-center gap-8">
-              <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-white/20 text-4xl font-black italic backdrop-blur-md">
-                {profile?.full_name?.[0] || "?"}
+              <div className="flex h-24 w-24 items-center justify-center rounded-3xl bg-white/20 text-4xl font-black italic backdrop-blur-md shadow-inner border border-white/30 animate-in zoom-in duration-500">
+                {profile?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || "?"}
               </div>
               <div>
-                <h1 className="text-3xl font-black tracking-tight">{profile?.full_name || "New User"}</h1>
-                <p className="font-bold text-white/70 italic">Premium Member</p>
+                <h1 className="text-3xl font-black tracking-tight">{profile?.full_name || "New Explorer"}</h1>
+                <p className="font-bold text-white/70 italic uppercase tracking-[0.2em] text-[10px]">Premium Member</p>
               </div>
             </div>
           </div>
@@ -170,16 +176,49 @@ export default function ProfilePage() {
                 </p>
               </div>
 
+              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-800 italic flex items-center gap-2">
+                    <MapPin className="h-3 w-3" />
+                    House No / Name
+                  </label>
+                  <input
+                    type="text"
+                    value={profile?.house_no || ""}
+                    onChange={(e) => profile && setProfile({ ...profile, house_no: e.target.value })}
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-900 placeholder:text-slate-500 outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white"
+                    placeholder="E.g. Flat 4B, Sunrise Apt"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-800 italic flex items-center gap-2">
+                    <MapPin className="h-3 w-3" />
+                    Road / Street Name
+                  </label>
+                  <input
+                    type="text"
+                    value={profile?.street || ""}
+                    onChange={(e) => profile && setProfile({ ...profile, street: e.target.value })}
+                    className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-900 placeholder:text-slate-500 outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white"
+                    placeholder="E.g. Bypass Road"
+                    required
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-800 italic flex items-center gap-2">
                   <MapPin className="h-3 w-3" />
-                  Detailed Address
+                  Famous Landmark
                 </label>
-                <textarea
-                  value={profile?.address || ""}
-                  onChange={(e) => profile && setProfile({ ...profile, address: e.target.value })}
-                  className="w-full h-32 rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-900 placeholder:text-slate-500 outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white resize-none"
-                  placeholder="House No, Building, Street..."
+                <input
+                  type="text"
+                  value={profile?.landmark || ""}
+                  onChange={(e) => profile && setProfile({ ...profile, landmark: e.target.value })}
+                  className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-900 placeholder:text-slate-500 outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white"
+                  placeholder="E.g. Next to HDFC Bank"
                   required
                 />
               </div>

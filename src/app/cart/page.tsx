@@ -12,9 +12,11 @@ import { useRouter } from "next/navigation";
 interface Profile {
   id: string;
   full_name: string;
-  address: string;
-  area: string;
   mobile_number: string;
+  house_no: string;
+  street: string;
+  landmark: string;
+  area: string;
 }
 
 export default function CartPage() {
@@ -70,7 +72,9 @@ export default function CartPage() {
         user_id: user?.id,
         status: 'pending',
         total_amount: totalPrice * 1.05,
-        shipping_address: profile?.address,
+        shipping_house_no: profile?.house_no,
+        shipping_street: profile?.street,
+        shipping_landmark: profile?.landmark,
         shipping_area: profile?.area,
         mobile_number: profile?.mobile_number,
         payment_method: paymentMethod,
@@ -222,11 +226,15 @@ export default function CartPage() {
                           </div>
                         )}
                         <h3 className="font-black text-slate-900 mb-3 italic uppercase flex items-center gap-2">
-                          Saved Address
+                          Delivery Details
                           {isAreaAllowed && <span className="text-[10px] bg-[var(--color-primary-green)] text-white px-2 py-0.5 rounded-full not-italic tracking-widest ml-2">Verified Area</span>}
                         </h3>
-                        <p className="text-slate-600 font-bold leading-relaxed">{profile.address}</p>
-                        <p className="mt-4 text-xs font-black text-slate-400 uppercase tracking-widest">{profile.area} | {profile.mobile_number}</p>
+                        <div className="space-y-1">
+                          <p className="text-slate-900 font-black">{profile.house_no}</p>
+                          <p className="text-slate-600 font-bold">{profile.street}</p>
+                          <p className="text-slate-500 text-sm italic">Near {profile.landmark}</p>
+                        </div>
+                        <p className="mt-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{profile.area} | {profile.mobile_number}</p>
                         
                         {!isAreaAllowed && (
                           <div className="mt-6 p-4 rounded-2xl bg-white border border-red-100">
