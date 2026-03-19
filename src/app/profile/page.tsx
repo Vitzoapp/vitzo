@@ -39,7 +39,20 @@ export default function ProfilePage() {
         .eq("id", session.user.id)
         .single();
 
-      if (data) setProfile(data);
+      if (data) {
+        setProfile(data);
+      } else {
+        // Initialize an empty profile object for new users
+        setProfile({
+          id: session.user.id,
+          full_name: session.user.user_metadata?.full_name || "",
+          mobile_number: "",
+          house_no: "",
+          street: "",
+          landmark: "",
+          area: ""
+        });
+      }
       setLoading(false);
     };
 
@@ -62,7 +75,8 @@ export default function ProfilePage() {
 
     const { error } = await supabase
       .from("profiles")
-      .update({
+      .upsert({
+        id: profile.id,
         full_name: profile.full_name,
         mobile_number: profile.mobile_number,
         house_no: profile.house_no,
@@ -70,8 +84,7 @@ export default function ProfilePage() {
         landmark: profile.landmark,
         area: profile.area,
         updated_at: new Date().toISOString(),
-      })
-      .eq("id", profile.id);
+      });
 
     if (error) {
       setError(error.message);
@@ -131,7 +144,7 @@ export default function ProfilePage() {
                   <input
                     type="text"
                     value={profile?.full_name || ""}
-                    onChange={(e) => profile && setProfile({ ...profile, full_name: e.target.value })}
+                    onChange={(e) => setProfile(prev => prev ? { ...prev, full_name: e.target.value } : null)}
                     className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-900 placeholder:text-slate-500 outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white"
                     placeholder="Enter your name"
                     required
@@ -146,7 +159,7 @@ export default function ProfilePage() {
                   <input
                     type="tel"
                     value={profile?.mobile_number || ""}
-                    onChange={(e) => profile && setProfile({ ...profile, mobile_number: e.target.value })}
+                    onChange={(e) => setProfile(prev => prev ? { ...prev, mobile_number: e.target.value } : null)}
                     className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-900 placeholder:text-slate-500 outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white"
                     placeholder="+91 00000 00000"
                     required
@@ -161,7 +174,7 @@ export default function ProfilePage() {
                 </label>
                 <select
                   value={profile?.area || ""}
-                  onChange={(e) => profile && setProfile({ ...profile, area: e.target.value })}
+                  onChange={(e) => setProfile(prev => prev ? { ...prev, area: e.target.value } : null)}
                   className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-900 outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white appearance-none"
                   required
                 >
@@ -185,7 +198,7 @@ export default function ProfilePage() {
                   <input
                     type="text"
                     value={profile?.house_no || ""}
-                    onChange={(e) => profile && setProfile({ ...profile, house_no: e.target.value })}
+                    onChange={(e) => setProfile(prev => prev ? { ...prev, house_no: e.target.value } : null)}
                     className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-900 placeholder:text-slate-500 outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white"
                     placeholder="E.g. Flat 4B, Sunrise Apt"
                     required
@@ -200,7 +213,7 @@ export default function ProfilePage() {
                   <input
                     type="text"
                     value={profile?.street || ""}
-                    onChange={(e) => profile && setProfile({ ...profile, street: e.target.value })}
+                    onChange={(e) => setProfile(prev => prev ? { ...prev, street: e.target.value } : null)}
                     className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-900 placeholder:text-slate-500 outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white"
                     placeholder="E.g. Bypass Road"
                     required
@@ -216,7 +229,7 @@ export default function ProfilePage() {
                 <input
                   type="text"
                   value={profile?.landmark || ""}
-                  onChange={(e) => profile && setProfile({ ...profile, landmark: e.target.value })}
+                  onChange={(e) => setProfile(prev => prev ? { ...prev, landmark: e.target.value } : null)}
                   className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 p-4 text-sm font-bold text-slate-900 placeholder:text-slate-500 outline-none transition-all focus:border-[var(--color-primary-green)] focus:bg-white"
                   placeholder="E.g. Next to HDFC Bank"
                   required
