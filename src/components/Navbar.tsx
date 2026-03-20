@@ -128,18 +128,16 @@ export default function Navbar() {
                       onClick={() => setSearchQuery(p.name)}
                       className="flex w-full items-center gap-4 rounded-2xl p-3 text-left transition-all hover:bg-gray-50 group"
                     >
-                      <div className="h-12 w-12 overflow-hidden rounded-xl bg-gray-100 border border-gray-50">
+                       <div className="h-12 w-12 overflow-hidden rounded-xl bg-gray-100 border border-gray-100 shadow-inner relative">
                         {p.image_url ? (
-                          <div className="relative h-full w-full scale-110 group-hover:scale-125 transition-all duration-500">
-                            <Image src={p.image_url} alt={p.name} fill className="object-cover" />
-                          </div>
+                          <Image src={p.image_url} alt={p.name} fill className="object-cover group-hover:scale-110 transition-transform" />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center font-black text-xs text-[var(--color-primary-green)]">V</div>
                         )}
                       </div>
                       <div>
-                        <p className="text-sm font-black text-slate-800 group-hover:text-[var(--color-primary-green)] transition-colors line-clamp-1">{p.name}</p>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase italic">₹{p.price.toLocaleString("en-IN")}</p>
+                        <p className="text-sm font-black text-slate-900 group-hover:text-[var(--color-primary-green)] transition-colors line-clamp-1 truncate">{p.name}</p>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase italic">₹{p.price.toLocaleString("en-IN")}</p>
                       </div>
                     </button>
                   )) : (
@@ -228,14 +226,18 @@ export default function Navbar() {
                <button 
                  key={p.id}
                  onClick={() => { setSearchQuery(p.name); setIsMobileSearchOpen(false); }}
-                 className="flex items-center gap-4 w-full p-2 hover:bg-slate-50 rounded-2xl transition-all"
+                 className="flex items-center gap-4 w-full p-3 bg-white border border-gray-50 rounded-2xl shadow-sm hover:bg-slate-50 transition-all"
                >
-                 <div className="h-14 w-14 rounded-xl bg-slate-100 overflow-hidden relative">
-                    {p.image_url ? <Image src={p.image_url} alt={p.name} fill className="object-cover" /> : <div className="flex h-full w-full items-center justify-center font-black text-[var(--color-primary-green)]">V</div>}
+                 <div className="h-14 w-14 rounded-xl bg-slate-100 overflow-hidden relative border-2 border-gray-50">
+                    {p.image_url ? (
+                      <Image src={p.image_url} alt={p.name} fill className="object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center font-black text-[var(--color-primary-green)] text-xl">V</div>
+                    )}
                  </div>
-                 <div>
-                    <p className="font-black text-slate-900 uppercase italic text-sm">{p.name}</p>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase italic">₹{p.price}</p>
+                 <div className="flex-1 text-left">
+                    <p className="font-black text-slate-900 uppercase italic text-sm leading-tight">{p.name}</p>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase italic mt-1">₹{p.price}</p>
                  </div>
                </button>
              ))}
@@ -289,10 +291,10 @@ function MobileNavItem({ href, label, icon, onClick }: { href: string, label: st
     <Link 
       href={href} 
       onClick={onClick}
-      className="flex items-center gap-4 p-5 rounded-3xl bg-gray-50 hover:bg-slate-900 hover:text-white transition-all group"
+      className="flex items-center gap-4 p-5 rounded-3xl bg-gray-50 border border-gray-100 shadow-sm hover:bg-slate-900 hover:text-white transition-all group"
     >
-      <div className="text-slate-400 group-hover:text-[var(--color-primary-green)] transition-colors">{icon}</div>
-      <span className="font-black uppercase italic text-xs tracking-widest">{label}</span>
+      <div className="text-[var(--color-primary-green)] group-hover:text-white transition-colors">{icon}</div>
+      <span className="font-black uppercase italic text-sm tracking-widest text-slate-900 group-hover:text-white">{label}</span>
     </Link>
   );
 }
