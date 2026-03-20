@@ -165,7 +165,13 @@ export default function CartPage() {
                       <div key={item.id} className="p-10 flex items-center gap-8 group">
                         <div className="h-28 w-28 bg-slate-50 rounded-[32px] overflow-hidden flex-shrink-0 relative border-2 border-transparent group-hover:border-[var(--color-primary-green)] transition-all">
                            {item.image ? (
-                             <img src={item.image} alt={item.name} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                             <Image 
+                               src={item.image} 
+                               alt={item.name} 
+                               width={112} 
+                               height={112} 
+                               className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                             />
                            ) : (
                              <div className="absolute inset-0 flex items-center justify-center text-[var(--color-primary-green)] font-black text-2xl uppercase italic opacity-20">Fresh</div>
                            )}
