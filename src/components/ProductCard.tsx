@@ -106,7 +106,7 @@ export default function ProductCard({
           ) : (
             <button 
               onClick={handleAdd}
-              className="flex h-12 px-6 items-center gap-2 rounded-2xl bg-slate-900 text-white transition-all hover:bg-[var(--color-primary-green)] hover:shadow-lg hover:shadow-[var(--color-primary-green)]/20 active:scale-95 text-sm font-black uppercase italic tracking-widest"
+              className="flex h-11 px-4 sm:px-6 items-center gap-2 rounded-2xl bg-slate-900 text-white transition-all hover:bg-[var(--color-primary-green)] hover:shadow-lg hover:shadow-[var(--color-primary-green)]/20 active:scale-95 text-[10px] sm:text-sm font-black uppercase italic tracking-widest"
             >
               <ShoppingCart className="h-4 w-4" />
               Add
