@@ -55,6 +55,10 @@ export default function ProductCard({
           alt={name}
           fill
           className="object-cover transition-transform duration-700 group-hover:scale-110"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = FALLBACK_IMAGE;
+          }}
         />
         {/* Category Badge */}
         <div className="absolute top-4 left-4 rounded-full bg-white/90 backdrop-blur-md px-3 py-1 text-[10px] font-black uppercase tracking-[0.15em] text-[var(--color-primary-green)] shadow-sm">

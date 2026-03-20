@@ -119,14 +119,14 @@ export default function Navbar() {
               className="h-14 w-full rounded-[24px] border-2 border-gray-100 bg-gray-50 pl-14 pr-4 text-sm font-black text-slate-900 outline-none transition-all duration-500 focus:border-[var(--color-secondary-green)] focus:bg-white focus:ring-[12px] focus:ring-[var(--color-secondary-green)]/5 placeholder:text-slate-500 placeholder:font-bold italic"
             />
             {isSearchFocused && searchQuery && (
-              <div className="absolute top-full left-0 right-0 mt-3 overflow-hidden rounded-[32px] border border-gray-100 bg-white p-2 shadow-[0_20px_50px_rgba(0,0,0,0.1)] backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="absolute top-full left-0 right-0 mt-3 overflow-hidden rounded-[32px] border border-gray-100 bg-white p-2 shadow-[0_40px_80px_rgba(0,0,0,0.15)] z-[100] animate-in fade-in slide-in-from-top-2 duration-300">
                 <p className="p-4 text-[10px] font-black uppercase tracking-widest text-slate-700 italic border-b border-slate-50">Pulse Synchronized Results</p>
                 <div className="space-y-1">
                   {filteredProducts.length > 0 ? filteredProducts.map((p) => (
                     <button 
                       key={p.id} 
                       onClick={() => setSearchQuery(p.name)}
-                      className="flex w-full items-center gap-4 rounded-2xl p-3 text-left transition-all hover:bg-gray-50 group"
+                      className="flex w-full items-center gap-4 rounded-2xl p-3 text-left transition-all hover:bg-gray-50 group border border-transparent hover:border-slate-100"
                     >
                        <div className="h-12 w-12 overflow-hidden rounded-xl bg-gray-100 border border-gray-100 shadow-inner relative">
                         <Image 
@@ -134,6 +134,10 @@ export default function Navbar() {
                           alt={p.name} 
                           fill 
                           className="object-cover group-hover:scale-110 transition-transform" 
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=800";
+                          }}
                         />
                       </div>
                       <div>
@@ -295,8 +299,12 @@ function MobileNavItem({ href, label, icon, onClick }: { href: string, label: st
       onClick={onClick}
       className="flex items-center gap-4 p-5 rounded-3xl bg-gray-50 border border-gray-100 shadow-sm hover:bg-slate-900 hover:text-white transition-all group"
     >
-      <div className="text-[var(--color-primary-green)] group-hover:text-white transition-colors">{icon}</div>
-      <span className="font-black uppercase italic text-sm tracking-widest text-slate-900 group-hover:text-white">{label}</span>
+      <div className="h-8 w-8 flex items-center justify-center text-[var(--color-primary-green)] group-hover:text-white transition-colors">
+        {icon}
+      </div>
+      <span className="font-black uppercase italic text-sm tracking-widest text-slate-900 group-hover:text-white">
+        {label}
+      </span>
     </Link>
   );
 }
