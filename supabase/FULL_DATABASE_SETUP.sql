@@ -106,9 +106,6 @@ CREATE POLICY "Public Read Products" ON products FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Users view their own profiles" ON profiles;
 CREATE POLICY "Users view their own profiles" ON profiles FOR SELECT USING (auth.uid() = id);
 
-DROP POLICY IF EXISTS "Users update their own profiles" ON profiles;
-CREATE POLICY "Users update their own profiles" ON profiles FOR UPDATE USING (auth.uid() = id);
-
 -- Admin policies
 DROP POLICY IF EXISTS "Admin manage categories" ON categories;
 CREATE POLICY "Admin manage categories" ON categories FOR ALL TO authenticated USING (auth.jwt() ->> 'email' = 'vitzo.hq@gmail.com');
@@ -126,14 +123,26 @@ CREATE POLICY "Admin manage order items" ON order_items FOR ALL TO authenticated
   )
 );
 
+-- Profiles: Users can manage their own profiles
+DROP POLICY IF EXISTS "Users view their own profiles" ON profiles;
+CREATE POLICY "Users view their own profiles" ON profiles FOR SELECT TO authenticated USING (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Users update their own profiles" ON profiles;
+CREATE POLICY "Users update their own profiles" ON profiles FOR UPDATE TO authenticated USING (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Users insert their own profiles" ON profiles;
+CREATE POLICY "Users insert their own profiles" ON profiles FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
+
+-- Orders: Users can view and insert their own orders
 DROP POLICY IF EXISTS "Users view their own orders" ON orders;
-CREATE POLICY "Users view their own orders" ON orders FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users view their own orders" ON orders FOR SELECT TO authenticated USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Users insert their own orders" ON orders;
-CREATE POLICY "Users insert their own orders" ON orders FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users insert their own orders" ON orders FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
+-- Order Items: Users can view their own order items
 DROP POLICY IF EXISTS "Users view their own order items" ON order_items;
-CREATE POLICY "Users view their own order items" ON order_items FOR SELECT USING (
+CREATE POLICY "Users view their own order items" ON order_items FOR SELECT TO authenticated USING (
   EXISTS (
     SELECT 1 FROM orders WHERE orders.id = order_items.order_id AND orders.user_id = auth.uid()
   )
