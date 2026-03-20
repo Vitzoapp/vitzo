@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
@@ -13,6 +13,13 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "Vitzo | Modern E-commerce",
   description: "Experience the next generation of e-commerce with Vitzo.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 import { SearchProvider } from "@/context/SearchContext";
