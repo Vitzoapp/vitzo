@@ -36,9 +36,9 @@ export default function CategorySection({ title, category, products }: CategoryS
         </Link>
       </div>
 
-      <div className="flex gap-6 overflow-x-auto pb-6 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory">
         {products.map((product) => (
-          <div key={product.id} className="min-w-[280px] w-[280px] flex-shrink-0">
+          <div key={product.id} className="min-w-[240px] w-[240px] sm:min-w-[280px] sm:w-[280px] flex-shrink-0 snap-start">
             <ProductCard {...product} />
           </div>
         ))}

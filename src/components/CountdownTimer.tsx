@@ -60,9 +60,9 @@ export default function CountdownTimer() {
 
   return (
     <div className="flex flex-col space-y-4">
-      <div className="inline-flex items-center rounded-full bg-white/20 backdrop-blur-md px-4 py-2 text-sm font-black uppercase tracking-widest italic text-white border border-white/30">
-        <Clock className="mr-2 h-4 w-4" />
-        {currentBatch}
+      <div className="inline-flex items-center flex-wrap rounded-full bg-white/20 backdrop-blur-md px-4 py-2 text-[10px] sm:text-sm font-black uppercase tracking-widest italic text-white border border-white/30 gap-2">
+        <Clock className="h-4 w-4 shrink-0" />
+        <span className="break-words">{currentBatch}</span>
       </div>
       
       <div className="flex items-center gap-4 bg-white/10 backdrop-blur-xl border border-white/20 p-4 rounded-3xl w-fit">

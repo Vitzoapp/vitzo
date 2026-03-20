@@ -68,6 +68,36 @@ export default function AdminPortal() {
     setLoading(false);
   };
 
+  const [uploading, setUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    let { error: uploadError } = await supabase.storage
+      .from('product-images')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      alert(uploadError.message);
+      setUploading(false);
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(filePath);
+
+    setImagePreview(publicUrl);
+    setUploading(false);
+  };
+
   const handleAddEditProduct = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -76,7 +106,7 @@ export default function AdminPortal() {
       price: Number(formData.get("price")),
       category_id: formData.get("category_id") as string,
       stock: Number(formData.get("stock")),
-      image_url: formData.get("image_url") as string,
+      image_url: imagePreview || (formData.get("image_url") as string),
     };
 
     if (editingProduct) {
@@ -97,6 +127,7 @@ export default function AdminPortal() {
     fetchData();
     setIsModalOpen(false);
     setEditingProduct(null);
+    setImagePreview(null);
   };
 
   const handleDeleteProduct = async (id: string) => {
@@ -349,13 +380,41 @@ export default function AdminPortal() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[11px] font-black uppercase text-slate-700 tracking-widest ml-4">Image URL</label>
+                    <label className="text-[11px] font-black uppercase text-slate-700 tracking-widest ml-4">Product Visual</label>
+                    <div className="flex items-center gap-4">
+                       <div className="h-20 w-20 rounded-2xl bg-slate-100 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden relative group">
+                          {imagePreview || editingProduct?.image_url ? (
+                            <Image src={imagePreview || editingProduct?.image_url || ""} alt="Preview" fill className="object-cover" />
+                          ) : (
+                            <Plus className="h-6 w-6 text-slate-300" />
+                          )}
+                          {uploading && (
+                            <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                               <div className="h-5 w-5 border-2 border-[var(--color-primary-green)] border-t-transparent rounded-full animate-spin" />
+                            </div>
+                          )}
+                       </div>
+                       <div className="flex-1">
+                          <input 
+                            type="file" 
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden" 
+                            id="image-upload"
+                          />
+                          <label 
+                            htmlFor="image-upload"
+                            className="inline-block px-6 py-3 bg-[var(--color-primary-green)] text-white text-[10px] font-black uppercase italic rounded-xl cursor-pointer hover:scale-105 transition-transform"
+                          >
+                            {uploading ? 'Processing...' : 'Upload New Asset'}
+                          </label>
+                          <p className="text-[8px] font-bold text-slate-400 mt-2 uppercase">PNG, JPG up to 5MB</p>
+                       </div>
+                    </div>
                     <input 
+                      type="hidden"
                       name="image_url" 
-                      className="w-full px-8 py-4 bg-gray-50 border border-gray-100 rounded-3xl font-bold outline-none focus:bg-white focus:border-[var(--color-secondary-green)] transition-all" 
-                      placeholder="https://..." 
                       defaultValue={editingProduct?.image_url} 
-                      required 
                     />
                   </div>
                 </div>
