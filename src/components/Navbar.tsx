@@ -119,7 +119,7 @@ export default function Navbar() {
               className="h-14 w-full rounded-[24px] border-2 border-gray-100 bg-gray-50 pl-14 pr-4 text-sm font-black text-slate-900 outline-none transition-all duration-500 focus:border-[var(--color-secondary-green)] focus:bg-white focus:ring-[12px] focus:ring-[var(--color-secondary-green)]/5 placeholder:text-slate-500 placeholder:font-bold italic"
             />
             {isSearchFocused && searchQuery && (
-              <div className="absolute top-[110%] left-0 w-full bg-white rounded-xl shadow-2xl z-[100] max-h-[60vh] overflow-y-auto flex flex-col">
+              <div className="absolute top-full left-0 w-full bg-white z-[100] shadow-xl rounded-b-xl overflow-y-auto max-h-[60vh] flex flex-col">
                 <p className="p-4 text-[10px] font-black uppercase tracking-widest text-slate-700 italic border-b border-slate-50">Pulse Synchronized Results</p>
                 <div className="flex flex-col">
                   {filteredProducts.length > 0 ? filteredProducts.map((p) => (
