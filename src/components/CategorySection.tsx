@@ -22,23 +22,22 @@ interface CategorySectionProps {
 export default function CategorySection({ title, category, products }: CategorySectionProps) {
   return (
     <section className="py-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex justify-between items-end mb-4 pr-4">
         <h2 className="font-outfit text-2xl font-black text-slate-900 flex items-center gap-2">
           <span className="h-8 w-1.5 bg-[var(--color-primary-green)] rounded-full" />
           {title}
         </h2>
         <Link 
           href={`/categories/${category}`}
-          className="flex items-center gap-1 text-sm font-bold text-[var(--color-primary-green)] hover:underline"
+          className="text-sm text-green-700 font-semibold hover:underline"
         >
           See All
-          <ChevronRight className="h-4 w-4" />
         </Link>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory">
+      <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 no-scrollbar scroll-smooth px-4 sm:px-0">
         {products.map((product) => (
-          <div key={product.id} className="min-w-[240px] w-[240px] sm:min-w-[280px] sm:w-[280px] flex-shrink-0 snap-start">
+          <div key={product.id} className="flex-shrink-0 snap-start w-[80vw] sm:w-[280px]">
             <ProductCard {...product} />
           </div>
         ))}
