@@ -39,7 +39,7 @@ export default function CategorySection({ title, category, products }: CategoryS
         </div>
       </div>
 
-      <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 no-scrollbar scroll-smooth px-4 sm:px-0">
+      <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 no-scrollbar scroll-smooth px-4 sm:px-0 touch-pan-x">
         {products.map((product) => (
           <div key={product.id} className="flex-shrink-0 snap-start w-[80vw] sm:w-[280px]">
             <ProductCard {...product} />
