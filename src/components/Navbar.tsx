@@ -223,7 +223,7 @@ export default function Navbar() {
                 className="w-full h-12 bg-slate-100 border-none rounded-2xl pl-12 pr-4 font-bold text-slate-900 focus:ring-2 focus:ring-[var(--color-primary-green)]"
               />
             </div>
-            <button onClick={() => setIsMobileSearchOpen(false)} className="text-sm font-black text-slate-400 uppercase tracking-widest">Cancel</button>
+            <button onClick={() => setIsMobileSearchOpen(false)} className="text-sm font-black text-slate-600 uppercase tracking-widest hover:text-[var(--color-primary-green)]">Cancel</button>
           </div>
           
           <div className="space-y-4">
@@ -256,9 +256,9 @@ export default function Navbar() {
         <>
           <div className="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-sm md:hidden" onClick={() => setIsMenuOpen(false)} />
           <div className="fixed top-0 right-0 z-[120] h-full w-4/5 max-w-sm bg-white shadow-2xl animate-in slide-in-from-right duration-500 md:hidden">
-            <div className="flex items-center justify-between p-8 border-b border-gray-50">
-               <h2 className="text-xl font-black italic uppercase text-slate-900 tracking-tighter">Menu <span className="text-[var(--color-primary-green)]">NODE</span></h2>
-               <button onClick={() => setIsMenuOpen(false)} className="p-2 bg-gray-50 rounded-xl text-slate-400"><X className="h-6 w-6" /></button>
+            <div className="flex items-center justify-between p-8 border-b border-gray-50 bg-white">
+               <h2 className="text-xl font-black italic uppercase text-slate-950 tracking-tighter">Menu <span className="text-[var(--color-primary-green)]">NODE</span></h2>
+               <button onClick={() => setIsMenuOpen(false)} className="p-2 bg-gray-50 rounded-xl text-slate-500 hover:text-[var(--color-primary-green)] transition-all"><X className="h-6 w-6" /></button>
             </div>
             
             <nav className="p-8 space-y-4">
