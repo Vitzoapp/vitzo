@@ -297,12 +297,12 @@ function MobileNavItem({ href, label, icon, onClick }: { href: string, label: st
     <Link 
       href={href} 
       onClick={onClick}
-      className="flex items-center gap-4 p-5 rounded-3xl bg-gray-50 border border-gray-100 shadow-sm hover:bg-slate-900 hover:text-white transition-all group"
+      className="flex items-center gap-4 p-5 rounded-3xl !bg-gray-100 border border-gray-200 shadow-sm hover:!bg-slate-900 hover:!text-white transition-all group"
     >
-      <div className="h-8 w-8 flex items-center justify-center text-[var(--color-primary-green)] group-hover:text-white transition-colors">
+      <div className="h-8 w-8 flex items-center justify-center !text-[var(--color-primary-green)] group-hover:!text-white transition-colors">
         {icon}
       </div>
-      <span className="font-black uppercase italic text-sm tracking-widest text-slate-900 group-hover:text-white">
+      <span className="font-black uppercase italic text-sm tracking-widest !text-slate-950 group-hover:!text-white">
         {label}
       </span>
     </Link>
