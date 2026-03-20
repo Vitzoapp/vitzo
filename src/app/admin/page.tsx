@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { LayoutDashboard, Package, Users, Plus, Edit, Trash2, X } from "lucide-react";

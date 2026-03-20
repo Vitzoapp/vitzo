@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart, User as UserIcon, Search, Menu, Package, Settings, X } from "lucide-react";
