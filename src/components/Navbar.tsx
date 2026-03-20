@@ -58,7 +58,7 @@ export default function Navbar() {
   const isAdmin = user?.email === "vitzo.hq@gmail.com";
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <div className="flex items-center gap-12">
@@ -141,8 +141,8 @@ export default function Navbar() {
                         />
                       </div>
                       <div className="flex-1 text-left">
-                        <p className="text-sm font-bold text-gray-900 group-hover:text-[var(--color-primary-green)] transition-colors line-clamp-1 truncate">{p.name}</p>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase italic">₹{p.price.toLocaleString("en-IN")}</p>
+                        <p className="text-sm font-bold text-gray-900 group-hover:text-[var(--color-primary-green)] transition-all line-clamp-1 truncate">{p.name}</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">₹{p.price.toLocaleString("en-IN")}</p>
                       </div>
                     </button>
                   )) : (
