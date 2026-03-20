@@ -11,7 +11,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useSearch } from "@/context/SearchContext";
 
-const SEARCH_PLACEHOLDERS = ["Search 'tomato'...", "Search 'fresh milk'...", "Search 'organic eggs'...", "Search 'brown bread'...", "Search 'green apples'..."];
+
 
 interface Product {
   id: string;
@@ -28,7 +28,6 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
-  const searchIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
