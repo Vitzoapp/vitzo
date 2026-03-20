@@ -14,6 +14,8 @@ interface ProductCardProps {
   rating?: number;
 }
 
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=800";
+
 export default function ProductCard({
   id,
   name,
@@ -23,7 +25,7 @@ export default function ProductCard({
   category,
 }: ProductCardProps) {
   const { cart, addToCart, updateQuantity, removeFromCart } = useCart();
-  const image = image_url || propImage || "";
+  const image = image_url || propImage || FALLBACK_IMAGE;
   
   const cartItem = cart.find(item => item.id === id);
   const quantity = cartItem?.quantity || 0;

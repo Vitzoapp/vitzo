@@ -129,11 +129,12 @@ export default function Navbar() {
                       className="flex w-full items-center gap-4 rounded-2xl p-3 text-left transition-all hover:bg-gray-50 group"
                     >
                        <div className="h-12 w-12 overflow-hidden rounded-xl bg-gray-100 border border-gray-100 shadow-inner relative">
-                        {p.image_url ? (
-                          <Image src={p.image_url} alt={p.name} fill className="object-cover group-hover:scale-110 transition-transform" />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center font-black text-xs text-[var(--color-primary-green)]">V</div>
-                        )}
+                        <Image 
+                          src={p.image_url || "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=800"} 
+                          alt={p.name} 
+                          fill 
+                          className="object-cover group-hover:scale-110 transition-transform" 
+                        />
                       </div>
                       <div>
                         <p className="text-sm font-black text-slate-900 group-hover:text-[var(--color-primary-green)] transition-colors line-clamp-1 truncate">{p.name}</p>
@@ -229,11 +230,12 @@ export default function Navbar() {
                  className="flex items-center gap-4 w-full p-3 bg-white border border-gray-50 rounded-2xl shadow-sm hover:bg-slate-50 transition-all"
                >
                  <div className="h-14 w-14 rounded-xl bg-slate-100 overflow-hidden relative border-2 border-gray-50">
-                    {p.image_url ? (
-                      <Image src={p.image_url} alt={p.name} fill className="object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center font-black text-[var(--color-primary-green)] text-xl">V</div>
-                    )}
+                    <Image 
+                      src={p.image_url || "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=800"} 
+                      alt={p.name} 
+                      fill 
+                      className="object-cover" 
+                    />
                  </div>
                  <div className="flex-1 text-left">
                     <p className="font-black text-slate-900 uppercase italic text-sm leading-tight">{p.name}</p>
