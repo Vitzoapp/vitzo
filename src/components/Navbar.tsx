@@ -98,7 +98,7 @@ export default function Navbar() {
         </div>
 
         {/* Search Bar */}
-        <div className="hidden flex-1 max-w-lg mx-8 lg:block">
+        <div className="hidden flex-1 max-w-lg mx-4 lg:mx-8 md:flex">
           <div className="relative group">
             <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center z-10">
               <div className={`absolute h-9 w-9 rounded-full border-2 border-dashed border-[var(--color-secondary-green)]/40 animate-spin-slow transition-all duration-500 ${isSearchFocused ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`} />
@@ -155,7 +155,7 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setIsMobileSearchOpen(true)}
-            className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-50 text-slate-600 lg:hidden hover:bg-gray-100 transition-colors"
+            className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-50 text-slate-600 md:hidden hover:bg-gray-100 transition-colors"
           >
             <Search className="h-5 w-5" />
           </button>
@@ -250,8 +250,8 @@ export default function Navbar() {
       {/* Mobile Menu Drawer */}
       {isMenuOpen && (
         <>
-          <div className="fixed inset-0 z-[70] bg-slate-900/60 backdrop-blur-sm lg:hidden" onClick={() => setIsMenuOpen(false)} />
-          <div className="fixed top-0 right-0 z-[80] h-full w-4/5 max-w-sm bg-white shadow-2xl animate-in slide-in-from-right duration-500 lg:hidden">
+          <div className="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-sm md:hidden" onClick={() => setIsMenuOpen(false)} />
+          <div className="fixed top-0 right-0 z-[120] h-full w-4/5 max-w-sm bg-white shadow-2xl animate-in slide-in-from-right duration-500 md:hidden">
             <div className="flex items-center justify-between p-8 border-b border-gray-50">
                <h2 className="text-xl font-black italic uppercase text-slate-900 tracking-tighter">Menu <span className="text-[var(--color-primary-green)]">NODE</span></h2>
                <button onClick={() => setIsMenuOpen(false)} className="p-2 bg-gray-50 rounded-xl text-slate-400"><X className="h-6 w-6" /></button>
