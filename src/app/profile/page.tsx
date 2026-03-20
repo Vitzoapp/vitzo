@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import type { User } from "@supabase/supabase-js";
 import { MapPin, Phone, User as UserIcon, Save, AlertCircle } from "lucide-react";
 
 const ALLOWED_AREAS = ["Ramanattukara", "Azhinjilam", "Farook College"];
@@ -17,7 +18,7 @@ interface Profile {
 }
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -33,7 +34,7 @@ export default function ProfilePage() {
       }
       setUser(session.user);
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", session.user.id)

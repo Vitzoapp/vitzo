@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart, User as UserIcon, Search, Menu, Package, MapPin, Settings } from "lucide-react";
+import { ShoppingCart, User as UserIcon, Search, Menu, Package, Settings } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { useCart } from "@/context/CartContext";
 import { useState, useEffect, useRef } from "react";
@@ -22,7 +22,6 @@ export default function Navbar() {
   const { totalItems } = useCart();
   const { searchQuery, setSearchQuery } = useSearch();
   const [user, setUser] = useState<User | null>(null);
-  const [searchIndex, setSearchIndex] = useState(0);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const searchIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -46,22 +45,8 @@ export default function Navbar() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Search Placeholder Animation
-  useEffect(() => {
-    if (!isSearchFocused && !searchQuery) {
-      searchIntervalRef.current = setInterval(() => {
-        setSearchIndex((prev) => (prev + 1) % SEARCH_PLACEHOLDERS.length);
-      }, 2000);
-    }
-    
-    return () => {
-      if (searchIntervalRef.current) clearInterval(searchIntervalRef.current);
-    };
-  }, [isSearchFocused, searchQuery]);
+  // Search Placeholder Animation - removed as searchIndex is unused
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-  };
 
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
