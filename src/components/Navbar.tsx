@@ -119,16 +119,16 @@ export default function Navbar() {
               className="h-14 w-full rounded-[24px] border-2 border-gray-100 bg-gray-50 pl-14 pr-4 text-sm font-black text-slate-900 outline-none transition-all duration-500 focus:border-[var(--color-secondary-green)] focus:bg-white focus:ring-[12px] focus:ring-[var(--color-secondary-green)]/5 placeholder:text-slate-500 placeholder:font-bold italic"
             />
             {isSearchFocused && searchQuery && (
-              <div className="absolute top-full left-0 right-0 mt-3 overflow-hidden rounded-[32px] border border-gray-100 bg-white p-2 shadow-[0_40px_80px_rgba(0,0,0,0.15)] z-[100] animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="absolute top-[110%] left-0 w-full bg-white rounded-xl shadow-2xl z-[100] max-h-[60vh] overflow-y-auto flex flex-col">
                 <p className="p-4 text-[10px] font-black uppercase tracking-widest text-slate-700 italic border-b border-slate-50">Pulse Synchronized Results</p>
-                <div className="space-y-1">
+                <div className="flex flex-col">
                   {filteredProducts.length > 0 ? filteredProducts.map((p) => (
                     <button 
                       key={p.id} 
                       onClick={() => setSearchQuery(p.name)}
-                      className="flex w-full items-center gap-4 rounded-2xl p-3 text-left transition-all hover:bg-gray-50 group border border-transparent hover:border-slate-100"
+                      className="flex items-center gap-4 p-3 border-b border-gray-100 bg-white text-gray-900 transition-all hover:bg-gray-50 group"
                     >
-                       <div className="h-12 w-12 overflow-hidden rounded-xl bg-gray-100 border border-gray-100 shadow-inner relative">
+                       <div className="h-12 w-12 overflow-hidden rounded-xl bg-gray-100 border border-gray-100 shadow-inner relative flex-shrink-0">
                         <Image 
                           src={p.image_url || "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=800"} 
                           alt={p.name} 
@@ -140,13 +140,13 @@ export default function Navbar() {
                           }}
                         />
                       </div>
-                      <div>
-                        <p className="text-sm font-black text-slate-900 group-hover:text-[var(--color-primary-green)] transition-colors line-clamp-1 truncate">{p.name}</p>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-bold text-gray-900 group-hover:text-[var(--color-primary-green)] transition-colors line-clamp-1 truncate">{p.name}</p>
                         <p className="text-[10px] font-bold text-slate-500 uppercase italic">₹{p.price.toLocaleString("en-IN")}</p>
                       </div>
                     </button>
                   )) : (
-                    <div className="p-8 text-center">
+                    <div className="p-8 text-center bg-white">
                        <p className="text-sm font-bold text-slate-400 italic">No products found for &quot;{searchQuery}&quot;</p>
                     </div>
                   )}
@@ -199,10 +199,10 @@ export default function Navbar() {
               )}
             </Link>
             <button 
-              onClick={() => setIsMenuOpen(true)}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-50 text-slate-600 md:hidden hover:bg-gray-100 transition-colors"
             >
-              <Menu className="h-6 w-6" />
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </div>
@@ -251,60 +251,50 @@ export default function Navbar() {
         </div>
       )}
 
-      {/* Mobile Menu Drawer */}
+      {/* Mobile Menu Dropdown */}
       {isMenuOpen && (
-        <>
-          <div className="fixed inset-0 z-[110] bg-slate-900/60 backdrop-blur-sm md:hidden" onClick={() => setIsMenuOpen(false)} />
-          <div className="fixed top-0 right-0 z-[120] h-full w-4/5 max-w-sm bg-white shadow-2xl animate-in slide-in-from-right duration-500 md:hidden">
-            <div className="flex items-center justify-between p-8 border-b border-gray-50 bg-white">
-               <h2 className="text-xl font-black italic uppercase text-slate-950 tracking-tighter">Menu <span className="text-[var(--color-primary-green)]">NODE</span></h2>
-               <button onClick={() => setIsMenuOpen(false)} className="p-2 bg-gray-50 rounded-xl text-slate-500 hover:text-[var(--color-primary-green)] transition-all"><X className="h-6 w-6" /></button>
-            </div>
-            
-            <nav className="p-8 space-y-4">
-               <MobileNavItem href="/" label="Home Base" icon={<Search className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)} />
-               <MobileNavItem href="/products" label="Shop Inventory" icon={<Package className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)} />
-               <MobileNavItem href="/categories" label="Categories" icon={<Menu className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)} />
-               <MobileNavItem href="/profile" label="Control Panel" icon={<Settings className="h-5 w-5" />} onClick={() => setIsMenuOpen(false)} />
-               {isAdmin && (
-                  <Link 
-                    href="/admin" 
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-4 p-5 rounded-3xl bg-[var(--color-primary-green)] text-white font-black uppercase italic text-xs tracking-widest shadow-xl shadow-emerald-200"
-                  >
-                    <Settings className="h-5 w-5" />
-                    ADMIN CORE
-                  </Link>
-               )}
-            </nav>
-
-            <div className="absolute bottom-10 left-8 right-8 p-8 bg-slate-50 rounded-[40px]">
-               <p className="text-[10px] font-black uppercase text-slate-400 mb-4 tracking-[0.2em]">Quick Access</p>
-               <Link href="/cart" onClick={() => setIsMenuOpen(false)} className="flex items-center justify-between w-full font-black uppercase italic text-slate-900">
-                  <span>Shopping Cart</span>
-                  <div className="h-8 w-8 bg-slate-900 text-white rounded-xl flex items-center justify-center text-[10px]">{totalItems}</div>
-               </Link>
-            </div>
-          </div>
-        </>
+        <div className="absolute top-full left-0 w-full bg-white shadow-2xl z-50 flex flex-col py-4 rounded-b-2xl border-t border-gray-50 md:hidden animate-in slide-in-from-top duration-300">
+           <div className="px-6 mb-4 flex items-center justify-between">
+              <h2 className="text-sm font-black italic uppercase text-slate-400 tracking-[0.2em]">Menu NODE</h2>
+           </div>
+           
+           <nav className="flex flex-col">
+              <MobileNavItem href="/" label="Home Base" onClick={() => setIsMenuOpen(false)} />
+              <MobileNavItem href="/products" label="Shop Inventory" onClick={() => setIsMenuOpen(false)} />
+              <MobileNavItem href="/categories" label="Categories" onClick={() => setIsMenuOpen(false)} />
+              <MobileNavItem href="/profile" label="Control Panel" onClick={() => setIsMenuOpen(false)} />
+              {isAdmin && (
+                 <Link 
+                   href="/admin" 
+                   onClick={() => setIsMenuOpen(false)}
+                   className="w-full text-left px-6 py-4 text-[var(--color-primary-green)] font-black uppercase italic text-sm tracking-widest border-b border-gray-100 hover:bg-gray-50 transition-all"
+                 >
+                   ADMIN CORE
+                 </Link>
+              )}
+              <Link 
+                href="/cart" 
+                onClick={() => setIsMenuOpen(false)} 
+                className="w-full text-left px-6 py-4 text-gray-900 font-bold text-lg flex items-center justify-between border-b border-gray-100 hover:bg-gray-50 transition-all"
+              >
+                 <span>Shopping Cart</span>
+                 <span className="h-7 w-7 bg-slate-900 text-white rounded-lg flex items-center justify-center text-[10px] font-black">{totalItems}</span>
+              </Link>
+           </nav>
+        </div>
       )}
     </header>
   );
 }
 
-function MobileNavItem({ href, label, icon, onClick }: { href: string, label: string, icon: React.ReactNode, onClick: () => void }) {
+function MobileNavItem({ href, label, onClick }: { href: string, label: string, onClick: () => void }) {
   return (
     <Link 
       href={href} 
       onClick={onClick}
-      className="flex items-center gap-4 p-5 rounded-3xl !bg-gray-100 border border-gray-200 shadow-sm hover:!bg-slate-900 hover:!text-white transition-all group"
+      className="w-full text-left px-6 py-4 text-gray-900 font-bold text-lg border-b border-gray-100 hover:bg-gray-50 transition-all"
     >
-      <div className="h-8 w-8 flex items-center justify-center !text-[var(--color-primary-green)] group-hover:!text-white transition-colors">
-        {icon}
-      </div>
-      <span className="font-black uppercase italic text-sm tracking-widest !text-slate-950 group-hover:!text-white">
-        {label}
-      </span>
+      {label}
     </Link>
   );
 }
