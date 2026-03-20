@@ -206,7 +206,7 @@ export default function Navbar() {
 
       {/* Mobile Search Overlay */}
       {isMobileSearchOpen && (
-        <div className="fixed inset-0 z-[60] bg-white p-4 animate-in slide-in-from-top duration-300 lg:hidden">
+        <div className="fixed inset-0 z-[100] bg-white p-4 animate-in slide-in-from-top duration-300 md:hidden">
           <div className="flex items-center gap-4 mb-8">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
