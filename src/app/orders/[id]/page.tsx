@@ -162,7 +162,8 @@ export default function OrderTrackingPage() {
     { label: 'Delivered', status: 'delivered', description: 'Enjoy your products!', icon: Package, subText: 'Completed' }
   ];
 
-  const currentStepIndex = steps.findIndex(s => s.status === order.delivery_status);
+  const currentStatusIndex = steps.findIndex(s => s.status === order.delivery_status);
+  const currentStepIndex = currentStatusIndex === -1 ? 0 : currentStatusIndex;
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20 pt-20">
