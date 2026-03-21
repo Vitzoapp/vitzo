@@ -67,14 +67,13 @@ export default function CartPage() {
     
     // Use the RPC function for atomic transaction (Order + Stock Deduction)
     const { data: orderId, error: checkoutError } = await supabase.rpc('process_checkout', {
-      p_user_id: user?.id,
       p_total_amount: totalPrice,
       p_shipping_house_no: profile?.house_no,
       p_shipping_street: profile?.street,
       p_shipping_landmark: profile?.landmark,
       p_shipping_area: profile?.area,
       p_mobile_number: profile?.mobile_number,
-      p_payment_method: paymentMethod,
+      p_payment_method: paymentMethod === 'cod' ? 'cash_on_delivery' : 'online_upi',
       p_items: cart.map(item => ({
         product_id: item.id,
         quantity: item.quantity,
