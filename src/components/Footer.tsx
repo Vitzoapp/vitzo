@@ -75,6 +75,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/agent/register" className="hover:text-[var(--color-primary-green)] font-bold">
+                  Become an Agent
+                </Link>
+              </li>
+              <li>
                 <Link href="/privacy" className="hover:text-[var(--color-primary-gold)]">
                   Privacy Policy
                 </Link>

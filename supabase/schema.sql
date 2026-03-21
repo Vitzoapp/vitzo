@@ -76,10 +76,19 @@ CREATE TABLE IF NOT EXISTS orders (
     mobile_number TEXT,
     payment_method TEXT,
     payment_status TEXT DEFAULT 'pending',
-    agent_id UUID REFERENCES agents(id),
-    delivery_pin TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Idempotent column additions for existing orders table
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='agent_id') THEN
+        ALTER TABLE orders ADD COLUMN agent_id UUID REFERENCES agents(id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='delivery_pin') THEN
+        ALTER TABLE orders ADD COLUMN delivery_pin TEXT;
+    END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS order_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

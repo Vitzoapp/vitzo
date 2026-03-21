@@ -110,13 +110,23 @@ export default function Navbar() {
                 Orders
               </Link>
             )}
-            <Link
-              href={agent ? "/agent/dashboard" : "/agent/register"}
-              className="group flex items-center gap-2 text-sm font-bold text-slate-600 transition-colors hover:text-[var(--color-primary-green)]"
-            >
-              <UserIcon className="h-4 w-4 transition-transform group-hover:-translate-y-0.5" />
-              {agent ? "Agent Panel" : "Become Agent"}
-            </Link>
+            {agent && (
+              <Link
+                href="/agent/dashboard"
+                className="group flex items-center gap-2 text-sm font-bold text-slate-600 transition-colors hover:text-[var(--color-primary-green)]"
+              >
+                <div className="relative">
+                  <UserIcon className="h-4 w-4 transition-transform group-hover:-translate-y-0.5" />
+                  <div className={`absolute -top-1 -right-1 h-2 w-2 rounded-full border-2 border-white ${agent.is_active ? 'bg-[var(--color-primary-green)] animate-pulse' : 'bg-red-500'}`} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="leading-none">Agent Panel</span>
+                  <span className={`text-[8px] font-black uppercase tracking-widest ${agent.is_active ? 'text-[var(--color-primary-green)]' : 'text-red-500'}`}>
+                    {agent.is_active ? 'Online' : 'Offline'}
+                  </span>
+                </div>
+              </Link>
+            )}
             <Link
               href="/categories"
               className="group flex items-center gap-2 text-sm font-bold text-slate-600 transition-colors hover:text-[var(--color-primary-green)]"
@@ -234,7 +244,7 @@ export default function Navbar() {
               <MobileNavItem href="/" label="Home" onClick={() => setIsMenuOpen(false)} />
               <MobileNavItem href="/products" label="Shop" onClick={() => setIsMenuOpen(false)} />
               <MobileNavItem href="/orders" label="My Orders" onClick={() => setIsMenuOpen(false)} />
-              <MobileNavItem href={agent ? "/agent/dashboard" : "/agent/register"} label={agent ? "Agent Panel" : "Become Agent"} onClick={() => setIsMenuOpen(false)} />
+              {agent && <MobileNavItem href="/agent/dashboard" label="Agent Panel" onClick={() => setIsMenuOpen(false)} />}
               <MobileNavItem href="/categories" label="Categories" onClick={() => setIsMenuOpen(false)} />
               {isAdmin && <MobileNavItem href="/admin" label="Admin Panel" onClick={() => setIsMenuOpen(false)} />}
            </nav>

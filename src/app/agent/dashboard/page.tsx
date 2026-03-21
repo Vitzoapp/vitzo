@@ -159,18 +159,29 @@ export default function AgentDashboard() {
                    <h1 className="text-3xl font-black uppercase italic tracking-tighter">AGENT {agent.full_name.split(' ')[0]}</h1>
                    <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Fleet ID: {agent.id.slice(0, 8)}</p>
                  </div>
-                 <button 
-                  onClick={toggleActive}
-                  disabled={isUpdating}
-                  className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all ${
-                    agent.is_active 
-                      ? 'bg-[var(--color-primary-green)] text-white shadow-[0_10px_20px_rgba(34,197,94,0.3)]' 
-                      : 'bg-white/10 text-white'
-                  }`}
-                 >
-                   <div className={`h-2 w-2 rounded-full ${agent.is_active ? 'bg-white animate-pulse' : 'bg-red-500'}`} />
-                   {agent.is_active ? 'Online & Ready' : 'System Offline'}
-                 </button>
+                 <div className="flex flex-col items-center gap-4 bg-white/5 p-6 rounded-[32px] border border-white/10">
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60">Control Center</span>
+                    <button 
+                      onClick={toggleActive}
+                      disabled={isUpdating}
+                      className={`relative w-full h-16 rounded-2xl font-black uppercase tracking-widest text-xs transition-all duration-500 flex items-center justify-between px-6 group ${
+                        agent.is_active 
+                          ? 'bg-[var(--color-primary-green)] text-white shadow-[0_20px_40px_rgba(34,197,94,0.3)]' 
+                          : 'bg-white/10 text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`h-2.5 w-2.5 rounded-full transition-all ${agent.is_active ? 'bg-white animate-pulse shadow-[0_0_10px_white]' : 'bg-red-500'}`} />
+                        <span className="italic">{agent.is_active ? 'Online & Ready' : 'System Offline'}</span>
+                      </div>
+                      <div className={`h-8 w-14 rounded-full bg-black/20 relative transition-all ${agent.is_active ? 'bg-black/10' : ''}`}>
+                        <div className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-all shadow-md ${agent.is_active ? 'translate-x-7' : 'translate-x-1'}`} />
+                      </div>
+                    </button>
+                    <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest italic text-center">
+                      {agent.is_active ? 'You are receiving new delivery assignments' : 'Go online to start receiving orders'}
+                    </p>
+                 </div>
                </div>
                
                <div className="grid grid-cols-2 gap-8">
