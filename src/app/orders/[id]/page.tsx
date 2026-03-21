@@ -51,7 +51,6 @@ export default function OrderTrackingPage() {
   const [errorStatus, setErrorStatus] = useState<number | null>(null);
 
   const [rating, setRating] = useState(0);
-  const [_comment, _setComment] = useState("");
   const [hasRated, setHasRated] = useState(false);
   const [submittingRating, setSubmittingRating] = useState(false);
 
@@ -113,23 +112,28 @@ export default function OrderTrackingPage() {
   const handleRate = async () => {
     if (rating === 0) return;
     setSubmittingRating(true);
-    const { error } = await supabase
-      .from('agent_ratings')
-      .insert([{
-        order_id: order?.id,
-        agent_id: order?.agent_id,
-        user_id: (await supabase.auth.getUser()).data.user?.id,
-        rating,
-        comment: _comment
-      }]);
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
 
-    if (error) {
-      console.error("Error submitting rating:", error);
-      alert("Could not submit rating. Please try again.");
-    } else {
+      const { error } = await supabase
+        .from('agent_ratings')
+        .insert([{
+          order_id: order?.id,
+          agent_id: order?.agent_id,
+          user_id: user.id,
+          rating
+        }]);
+
+      if (error) throw error;
       setHasRated(true);
+    } catch (error) {
+      console.error("Error submitting rating:", error);
+      alert("Could not submit rating: " + (error as any).message);
+    } finally {
+      setSubmittingRating(false);
     }
-    setSubmittingRating(false);
   };
 
   if (loading) return <div className="min-h-screen bg-white"><div className="p-20 animate-pulse bg-gray-50 h-screen" /></div>;
@@ -292,12 +296,6 @@ export default function OrderTrackingPage() {
                     </button>
                   ))}
                 </div>
-                <textarea 
-                  value={_comment}
-                  onChange={(e) => _setComment(e.target.value)}
-                  placeholder="Share your delivery experience..."
-                  className="w-full h-24 bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium focus:bg-white focus:border-[var(--color-primary-green)] outline-none mb-6 resize-none"
-                />
                 <button 
                   onClick={handleRate}
                   disabled={submittingRating || rating === 0}

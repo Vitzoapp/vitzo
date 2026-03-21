@@ -1,3 +1,4 @@
+// src/app/page.tsx
 import Link from "next/link";
 import { ShoppingBag, Zap, ShieldCheck, MapPin } from "lucide-react";
 import CategorySection from "@/components/CategorySection";
@@ -19,6 +20,20 @@ interface Product {
   categories?: { name: string };
 }
 
+function getDeliverySchedule() {
+  const now = new Date();
+  const cutoff = new Date();
+  cutoff.setHours(11, 0, 0, 0);
+  
+  const isAfterCutoff = now > cutoff;
+  
+  return {
+    deliveryDay: isAfterCutoff ? "Tomorrow" : "Today",
+    cutoffTime: "11:00 AM",
+    deliveryWindow: "1:00 PM",
+  };
+}
+
 export default async function Home() {
   const supabase = await createClient();
   
@@ -27,102 +42,91 @@ export default async function Home() {
     supabase.from('products').select('*, categories(name, slug)').limit(50)
   ]);
 
-  const categories = catRes.data || [] as Category[];
-  const products = prodRes.data || [] as Product[];
-
-  // Dynamic delivery time calculation
-  const now = new Date();
-  const cutoff = new Date();
-  cutoff.setHours(11, 0, 0, 0);
-  
-  const isAfterCutoff = now > cutoff;
-  const deliveryDay = isAfterCutoff ? "TOMORROW" : "TODAY";
-  const orderByTime = "11:00 AM"; // Always 11 AM local for the next batch
-  const deliveryTime = "1:00 PM";
+  const categories = (catRes.data || []) as Category[];
+  const products = (prodRes.data || []) as Product[];
+  const schedule = getDeliverySchedule();
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
-      {/* Dynamic Banner Section */}
-      <section className="bg-[var(--color-primary-green)] pt-8 pb-20 relative overflow-hidden">
-        {/* Abstract Background pattern */}
-        <div className="absolute top-0 right-0 w-1/3 h-full bg-white/10 skew-x-12 translate-x-1/2" />
-        
+    <div className="flex flex-col min-h-screen bg-slate-50">
+      <section className="bg-[var(--color-primary-green)] pt-12 pb-24 relative overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
-            <div className="flex flex-col space-y-8 max-w-2xl">
-              <CountdownTimer />
+            
+            <div className="flex flex-col space-y-6 max-w-2xl text-white">
+              <div className="inline-flex items-center space-x-2 bg-white/10 rounded-full px-4 py-2 w-fit backdrop-blur-sm">
+                <CountdownTimer />
+                <span className="text-sm font-medium tracking-wide">
+                  Order by {schedule.cutoffTime} for {schedule.deliveryDay} delivery
+                </span>
+              </div>
               
-              <h1 className="font-outfit text-6xl font-black leading-[0.9] sm:text-8xl text-white tracking-tighter">
-                ORDER BY <br />
-                <span className="text-white drop-shadow-2xl">{orderByTime}</span>
+              <h1 className="font-outfit text-5xl font-bold tracking-tight sm:text-7xl leading-tight">
+                Fresh Groceries,<br />
+                Delivered Smart.
               </h1>
               
-              <p className="text-2xl font-black text-white/80 italic tracking-tight">
-                For delivery {deliveryDay} at <span className="text-white underline decoration-4 decoration-white/50 underline-offset-8">{deliveryTime}</span>
+              <p className="text-lg text-white/90 max-w-lg leading-relaxed">
+                Experience high-quality produce and daily essentials delivered at {schedule.deliveryWindow}. Shop now and benefit from our eco-friendly batch routing.
               </p>
 
-              <div className="flex flex-wrap gap-4 pt-4">
+              <div className="pt-4">
                 <Link
                   href="/products"
-                  className="inline-flex items-center rounded-3xl bg-slate-900 px-10 py-5 text-lg font-black text-white shadow-2xl transition-all hover:scale-105 active:scale-95 hover:bg-slate-800"
+                  className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-8 py-4 text-base font-semibold text-white transition-colors hover:bg-slate-800 shadow-sm"
                 >
-                  Start Shopping
+                  Shop All Categories
                 </Link>
               </div>
             </div>
             
-            {/* Visual element (Grocery Bag) */}
-            <div className="relative group">
-               <div className="absolute inset-0 bg-white/20 rounded-full blur-3xl animate-pulse group-hover:bg-white/40 transition-all" />
-               <div className="relative flex h-80 w-80 md:h-[450px] md:w-[450px] items-center justify-center rounded-[60px] border-8 border-white/30 bg-white/10 backdrop-blur-md shadow-2xl transform rotate-3 transition-transform hover:rotate-0">
-                 <div className="absolute -top-8 -right-8 h-24 w-24 bg-[var(--color-secondary-green)] rounded-full border-4 border-white flex items-center justify-center shadow-xl rotate-12">
-                    <span className="text-white font-black text-xl italic leading-none text-center">FRESH<br/>PICK</span>
-                 </div>
-                 <ShoppingBag className="h-48 w-48 text-white drop-shadow-2xl" />
+            <div className="relative hidden lg:block">
+               <div className="flex h-96 w-96 items-center justify-center rounded-3xl bg-white/10 backdrop-blur-md shadow-lg border border-white/20">
+                 <ShoppingBag className="h-32 w-32 text-white/90" strokeWidth={1.5} />
                </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Feature Cards */}
-      <div className="mx-auto max-w-7xl px-4 -mt-12 relative z-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 -mt-10 relative z-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-8 rounded-[32px] shadow-xl border border-gray-100 flex items-center gap-6 group hover:translate-y-[-4px] transition-all">
-             <div className="h-16 w-16 bg-orange-50 rounded-2xl flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-               <Zap className="h-8 w-8 text-orange-500" />
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex items-start gap-4">
+             <div className="bg-orange-50 p-3 rounded-xl flex-shrink-0">
+               <Zap className="h-6 w-6 text-orange-600" />
              </div>
              <div>
-               <h3 className="font-black text-slate-900 text-lg">Community Prices</h3>
-               <p className="text-sm font-bold text-slate-400">Save up to 30% by batching orders.</p>
+               <h3 className="font-semibold text-slate-900">Smart Batching</h3>
+               <p className="text-sm text-slate-500 mt-1">Unlock up to 30% savings by joining community delivery routes.</p>
              </div>
           </div>
-          <div className="bg-white p-8 rounded-[32px] shadow-xl border border-gray-100 flex items-center gap-6 group hover:translate-y-[-4px] transition-all">
-             <div className="h-16 w-16 bg-green-50 rounded-2xl flex items-center justify-center group-hover:bg-green-100 transition-colors">
-               <ShieldCheck className="h-8 w-8 text-green-500" />
+          
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex items-start gap-4">
+             <div className="bg-green-50 p-3 rounded-xl flex-shrink-0">
+               <ShieldCheck className="h-6 w-6 text-green-600" />
              </div>
              <div>
-               <h3 className="font-black text-slate-900 text-lg">Eco-Friendly</h3>
-               <p className="text-sm font-bold text-slate-400">1 Truck. 1 Trip. Zero Emissions.</p>
+               <h3 className="font-semibold text-slate-900">Sustainable Operations</h3>
+               <p className="text-sm text-slate-500 mt-1">Optimized logistics mean fewer trucks on the road and zero wasted trips.</p>
              </div>
           </div>
-          <div className="bg-white p-8 rounded-[32px] shadow-xl border border-gray-100 flex items-center gap-6 group hover:translate-y-[-4px] transition-all">
-             <div className="h-16 w-16 bg-blue-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-               <MapPin className="h-8 w-8 text-blue-500" />
+          
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex items-start gap-4">
+             <div className="bg-blue-50 p-3 rounded-xl flex-shrink-0">
+               <MapPin className="h-6 w-6 text-blue-600" />
              </div>
              <div>
-               <h3 className="font-black text-slate-900 text-lg">Farm Fresh</h3>
-               <p className="text-sm font-bold text-slate-400">Direct from farm to your door.</p>
+               <h3 className="font-semibold text-slate-900">Farm to Door</h3>
+               <p className="text-sm text-slate-500 mt-1">Source tracking ensures your produce arrives fresh and fully inspected.</p>
              </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 space-y-20">
+      <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 space-y-16">
         {categories.map((cat) => {
           const catProducts = products.filter(p => p.category_id === cat.id);
           if (catProducts.length === 0) return null;
+          
           return (
             <CategorySection 
               key={cat.id}
