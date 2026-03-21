@@ -165,6 +165,8 @@ CREATE POLICY "Users insert their own order items" ON order_items FOR INSERT TO 
 -- Agents: Own record and public stats
 DROP POLICY IF EXISTS "Agents view own" ON agents;
 CREATE POLICY "Agents view own" ON agents FOR SELECT TO authenticated USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Agents update own status" ON agents;
+CREATE POLICY "Agents update own status" ON agents FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 DROP POLICY IF EXISTS "Users insert own agent application" ON agents;
 CREATE POLICY "Users insert own agent application" ON agents FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 DROP POLICY IF EXISTS "Public view agent stats" ON agents;
@@ -236,6 +238,34 @@ $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS tr_generate_pin ON orders;
 CREATE TRIGGER tr_generate_pin BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION generate_delivery_pin();
+
+-- Auto Assign Order to Agent
+CREATE OR REPLACE FUNCTION auto_assign_order_to_agent()
+RETURNS TRIGGER AS $$
+DECLARE
+    target_agent_id UUID;
+BEGIN
+    -- Find an approved, active agent in the same area with the fewest total orders
+    SELECT id INTO target_agent_id
+    FROM agents
+    WHERE status = 'approved' 
+      AND is_active = true 
+      AND working_area = NEW.shipping_area
+    ORDER BY total_orders ASC
+    LIMIT 1;
+
+    -- If agent found, assign them
+    IF target_agent_id IS NOT NULL THEN
+        NEW.agent_id := target_agent_id;
+        NEW.delivery_status := 'assigned';
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tr_auto_assign_order ON orders;
+CREATE TRIGGER tr_auto_assign_order BEFORE INSERT ON orders FOR EACH ROW EXECUTE FUNCTION auto_assign_order_to_agent();
 
 -- 8. SEEDING (Idempotent)
 INSERT INTO categories (id, name, slug) VALUES 

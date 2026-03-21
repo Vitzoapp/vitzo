@@ -116,15 +116,20 @@ export default function AgentDashboard() {
     };
   }, [router, agent?.id]);
 
-  const toggleActive = async () => {
+const toggleActive = async () => {
     if (!agent) return;
     setIsUpdating(true);
-    const { data, error: _error } = await supabase
+    const { data, error } = await supabase
       .from('agents')
       .update({ is_active: !agent.is_active })
       .eq('id', agent.id)
       .select()
       .single();
+
+    if (error) {
+      console.error("Failed to update status:", error);
+      alert("Could not update status. Please try again.");
+    }
 
     if (data) setAgent(data);
     setIsUpdating(false);
@@ -195,9 +200,9 @@ export default function AgentDashboard() {
                   </div>
                </div>
              </div>
-             <div className="absolute top-0 right-0 p-8 opacity-5">
-               <ShieldCheck className="h-40 w-40" />
-             </div>
+             <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+  <ShieldCheck className="h-40 w-40" />
+</div>
            </div>
 
            <StatCard icon={Star} label="Rating" value={String(agent.average_rating || '5.0')} color="amber" />
@@ -265,7 +270,7 @@ export default function AgentDashboard() {
                             Confirm Delivered
                           </button>
                         )}
-                        <span className="text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">Status: {order.delivery_status}</span>
+                        <span className="text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Status: {order.delivery_status}</span>
                       </div>
                     </div>
                   </div>
