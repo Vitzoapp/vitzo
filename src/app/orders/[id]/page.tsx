@@ -142,10 +142,10 @@ export default function OrderTrackingPage() {
   );
 
   const steps = [
-    { label: 'Confirmed', status: 'pending', description: 'Agent will be assigned shortly', icon: CheckCircle2 },
-    { label: 'Agent Assigned', status: 'assigned', description: order.agents?.full_name || 'Finding best agent', icon: User },
-    { label: 'Out for Delivery', status: 'out_for_delivery', description: 'Order on its way', icon: Truck },
-    { label: 'Delivered', status: 'delivered', description: 'Enjoy your products', icon: Package }
+    { label: 'Confirmed', status: 'pending', description: 'Order received and being processed', icon: CheckCircle2, subText: 'Estimated: 5 mins' },
+    { label: 'Agent Assigned', status: 'assigned', description: order.agents?.full_name ? `Agent ${order.agents.full_name} is at store` : 'Finding best agent nearby', icon: User, subText: 'Estimated: 10 mins' },
+    { label: 'Out for Delivery', status: 'out_for_delivery', description: 'Order on its way to you', icon: Truck, subText: 'Arrival in 15 mins' },
+    { label: 'Delivered', status: 'delivered', description: 'Enjoy your products!', icon: Package, subText: 'Completed' }
   ];
 
   const currentStepIndex = steps.findIndex(s => s.status === order.delivery_status);
@@ -205,9 +205,29 @@ export default function OrderTrackingPage() {
                         <h4 className={`mt-4 text-[10px] font-black uppercase tracking-[0.15em] transition-colors ${
                           isActive ? 'text-slate-900' : 'text-slate-300'
                         }`}>{step.label}</h4>
+                        <span className={`mt-1 text-[8px] font-bold uppercase tracking-widest ${
+                          isCurrent ? 'text-[var(--color-primary-green)]' : 'text-slate-400'
+                        }`}>{step.subText}</span>
                       </div>
                     );
                   })}
+                </div>
+              </div>
+
+              {/* Enhanced Status Info Card */}
+              <div className="mt-8 p-6 bg-slate-50 rounded-3xl border border-slate-100 flex items-start gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-[var(--color-primary-green)]">
+                  <Clock className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 uppercase italic tracking-tight">Status Insight</h3>
+                  <p className="text-xs font-medium text-slate-500 mt-1">{steps[currentStepIndex].description}</p>
+                  {order.delivery_status !== 'delivered' && (
+                    <div className="mt-3 flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-[var(--color-primary-green)] animate-ping" />
+                      <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Live Updates Enabled</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

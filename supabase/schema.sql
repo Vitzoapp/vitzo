@@ -46,11 +46,22 @@ CREATE TABLE IF NOT EXISTS agents (
     salary DECIMAL(10,2) DEFAULT 0,
     total_orders INTEGER DEFAULT 0,
     average_rating DECIMAL(3,2) DEFAULT 0,
-    working_area TEXT CHECK (working_area IN ('Ramanattukara', 'Azhinjilam', 'Farook College')),
-    vehicle_type TEXT CHECK (vehicle_type IN ('Bike', 'Scooter', 'Car', 'Van')),
-    license_number TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Idempotent column additions for existing agents table
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='agents' AND column_name='working_area') THEN
+        ALTER TABLE agents ADD COLUMN working_area TEXT CHECK (working_area IN ('Ramanattukara', 'Azhinjilam', 'Farook College'));
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='agents' AND column_name='vehicle_type') THEN
+        ALTER TABLE agents ADD COLUMN vehicle_type TEXT CHECK (vehicle_type IN ('Bike', 'Scooter', 'Car', 'Van'));
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='agents' AND column_name='license_number') THEN
+        ALTER TABLE agents ADD COLUMN license_number TEXT;
+    END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

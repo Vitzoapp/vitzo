@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 import { ShoppingCart, User as UserIcon, Search, Menu, Package, Settings, X, Clock } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { useCart } from "@/context/CartContext";
@@ -25,6 +26,8 @@ interface Agent {
 }
 
 export default function Navbar() {
+  const router = useRouter();
+  const pathname = usePathname();
   const { totalItems } = useCart();
   const { searchQuery, setSearchQuery } = useSearch();
   const [user, setUser] = useState<User | null>(null);
@@ -66,6 +69,14 @@ export default function Navbar() {
   ).slice(0, 5);
 
   const isAdmin = user?.email === "vitzo.hq@gmail.com";
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      if (pathname !== '/products') {
+        router.push('/products');
+      }
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white/80 backdrop-blur-md">
@@ -131,6 +142,7 @@ export default function Navbar() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearchKeyPress}
               placeholder="Search..."
               className="h-11 w-full rounded-2xl bg-gray-50 pl-11 pr-4 text-xs font-bold outline-none border border-gray-100 focus:border-[var(--color-primary-green)] transition-all"
             />
