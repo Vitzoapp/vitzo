@@ -331,7 +331,7 @@ export default function CartPage() {
                  <p className="text-slate-400 font-bold mb-16 max-w-sm mx-auto leading-relaxed">Your order has been received. We&apos;ll be at your doorstep during the evening batch today.</p>
                  <div className="flex flex-col gap-4 max-w-xs mx-auto">
                     <Link href="/" className="bg-[var(--color-primary-green)] text-white px-10 py-6 rounded-3xl font-black uppercase tracking-widest hover:scale-105 transition-all shadow-2xl shadow-emerald-200">Keep Shopping</Link>
-                    <Link href="/profile" className="font-black text-slate-400 hover:text-slate-900 uppercase tracking-widest text-xs py-4">View My Orders</Link>
+                    <Link href="/orders" className="font-black text-slate-400 hover:text-slate-900 uppercase tracking-widest text-xs py-4">View My Orders</Link>
                  </div>
               </div>
             )}

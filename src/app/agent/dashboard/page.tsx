@@ -12,7 +12,6 @@ import {
   ShieldCheck
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import Navbar from "@/components/Navbar";
 
 interface Agent {
   id: string;
@@ -142,14 +141,13 @@ export default function AgentDashboard() {
     }
   };
 
-  if (loading || !agent) return <div className="min-h-screen bg-white"><Navbar /><div className="p-20 animate-pulse bg-gray-50 h-screen" /></div>;
+  if (loading || !agent) return <div className="min-h-screen bg-white"><div className="p-20 animate-pulse bg-gray-50 h-screen" /></div>;
 
   const pendingOrders = orders.filter(o => o.delivery_status !== 'delivered');
   const deliveredOrders = orders.filter(o => o.delivery_status === 'delivered');
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
-      <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 py-8 md:py-12">
         {/* Header Stats */}

@@ -6,7 +6,6 @@ import { useParams, useRouter } from "next/navigation";
 import { ShoppingCart, Plus, Minus, ArrowLeft, Star, ShieldCheck, Truck, RefreshCcw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useCart } from "@/context/CartContext";
-import Navbar from "@/components/Navbar";
 
 interface Product {
   id: string;
@@ -47,7 +46,6 @@ export default function ProductPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
-        <Navbar />
         <div className="max-w-7xl mx-auto px-4 py-20 animate-pulse">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             <div className="aspect-square bg-gray-100 rounded-[40px]" />
@@ -66,7 +64,6 @@ export default function ProductPage() {
   if (!product) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center">
-        <Navbar />
         <p className="text-2xl font-black text-slate-300 italic uppercase">Product not found</p>
         <button onClick={() => router.back()} className="mt-4 text-[var(--color-primary-green)] font-bold">Go Back</button>
       </div>
@@ -87,8 +84,7 @@ export default function ProductPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <Navbar />
+    <div className="min-h-screen bg-white pt-20">
       
       <main className="max-w-7xl mx-auto px-4 py-8 md:py-16">
         {/* Back Button */}

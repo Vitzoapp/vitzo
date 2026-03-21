@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Package, ChevronRight, Clock, CheckCircle2, Truck, AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import Navbar from "@/components/Navbar";
 
 interface Order {
   id: string;
@@ -61,8 +60,7 @@ export default function OrdersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
-      <Navbar />
+    <div className="min-h-screen bg-gray-50/50 pt-20">
       
       <main className="max-w-4xl mx-auto px-4 py-12">
         <div className="flex items-center gap-4 mb-10">

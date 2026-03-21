@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Clock, XCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import Navbar from "@/components/Navbar";
 
 interface Agent {
   id: string;
@@ -53,13 +52,12 @@ export default function AgentWaitingPage() {
     return () => clearInterval(interval);
   }, [router]);
 
-  if (loading || !agent) return <div className="min-h-screen bg-white"><Navbar /><div className="p-20 animate-pulse bg-gray-50 h-screen" /></div>;
+  if (loading || !agent) return <div className="min-h-screen bg-white"><div className="p-20 animate-pulse bg-gray-50 h-screen" /></div>;
 
   const isTerminated = agent.status === 'terminated';
 
   return (
     <div className="min-h-screen bg-gray-50/50">
-      <Navbar />
       
       <main className="max-w-3xl mx-auto px-4 py-20 md:py-32">
         <div className="bg-white rounded-[50px] p-10 md:p-16 border border-gray-100 shadow-[0_30px_60px_rgba(0,0,0,0.05)] text-center relative overflow-hidden">

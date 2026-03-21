@@ -217,7 +217,7 @@ export default function AdminPortal() {
              />
              <SidebarItem 
                icon={<Truck />} 
-               label="Fleet Units" 
+               label="Delivery Agent Control" 
                active={activeTab === "agents"} 
                onClick={() => setActiveTab("agents")} 
              />

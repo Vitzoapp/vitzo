@@ -15,7 +15,6 @@ import {
   User
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import Navbar from "@/components/Navbar";
 
 interface Order {
   id: string;
@@ -121,8 +120,8 @@ export default function OrderTrackingPage() {
     setSubmittingRating(false);
   };
 
-  if (loading) return <div className="min-h-screen bg-white"><Navbar /><div className="p-20 animate-pulse bg-gray-50 h-screen" /></div>;
-  if (!order) return <div className="min-h-screen bg-white flex items-center justify-center"><Navbar /><p>Order not found</p></div>;
+  if (loading) return <div className="min-h-screen bg-white"><div className="p-20 animate-pulse bg-gray-50 h-screen" /></div>;
+  if (!order) return <div className="min-h-screen bg-white flex items-center justify-center"><p>Order not found</p></div>;
 
   const steps = [
     { label: 'Confirmed', status: 'pending', description: 'Agent will be assigned shortly', icon: CheckCircle2 },
@@ -134,8 +133,7 @@ export default function OrderTrackingPage() {
   const currentStepIndex = steps.findIndex(s => s.status === order.delivery_status);
 
   return (
-    <div className="min-h-screen bg-gray-50/50 pb-20">
-      <Navbar />
+    <div className="min-h-screen bg-gray-50/50 pb-20 pt-20">
       
       <main className="max-w-7xl mx-auto px-4 py-8 md:py-12">
         <button 

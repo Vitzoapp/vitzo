@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { User, Phone, MapPin, Send, ShieldCheck, Clock, CheckCircle2 } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-import Navbar from "@/components/Navbar";
 
 export default function AgentRegisterPage() {
   const router = useRouter();
@@ -69,11 +68,10 @@ export default function AgentRegisterPage() {
     }
   };
 
-  if (loading) return <div className="min-h-screen bg-white"><Navbar /><div className="p-20 animate-pulse bg-gray-50 h-screen" /></div>;
+  if (loading) return <div className="min-h-screen bg-white"><div className="p-20 animate-pulse bg-gray-50 h-screen" /></div>;
 
   return (
     <div className="min-h-screen bg-gray-50/50 pb-20">
-      <Navbar />
       
       <main className="max-w-4xl mx-auto px-4 py-12 md:py-20">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
