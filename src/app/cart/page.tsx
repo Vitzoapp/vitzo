@@ -65,52 +65,33 @@ export default function CartPage() {
   const handlePlaceOrder = async () => {
     setLoading(true);
     
-    // Save order to Supabase
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
-      .insert({
-        user_id: user?.id,
-        status: 'pending',
-        total_amount: totalPrice,
-        shipping_house_no: profile?.house_no,
-        shipping_street: profile?.street,
-        shipping_landmark: profile?.landmark,
-        shipping_area: profile?.area,
-        mobile_number: profile?.mobile_number,
-        payment_method: paymentMethod,
-        payment_status: 'pending'
-      })
-      .select()
-      .single();
+    // Use the RPC function for atomic transaction (Order + Stock Deduction)
+    const { data: orderId, error: checkoutError } = await supabase.rpc('process_checkout', {
+      p_user_id: user?.id,
+      p_total_amount: totalPrice,
+      p_shipping_house_no: profile?.house_no,
+      p_shipping_street: profile?.street,
+      p_shipping_landmark: profile?.landmark,
+      p_shipping_area: profile?.area,
+      p_mobile_number: profile?.mobile_number,
+      p_payment_method: paymentMethod,
+      p_items: cart.map(item => ({
+        product_id: item.id,
+        quantity: item.quantity,
+        price: item.price
+      }))
+    });
 
-    if (orderError) {
-      alert("Error placing order: " + orderError.message);
+    if (checkoutError) {
+      alert("Error placing order: " + checkoutError.message);
       setLoading(false);
       return;
     }
 
-    // Save order items
-    const orderItems = cart.map(item => ({
-      order_id: order.id,
-      product_id: item.id,
-      quantity: item.quantity,
-      price_at_time_of_order: item.price
-    }));
-
-    const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
-
-    if (itemsError) {
-      console.error("Error saving order items, rolling back order:", itemsError);
-      // Rollback: delete the order if items failed
-      await supabase.from("orders").delete().eq("id", order.id);
-      
-      alert("Error saving order items: " + itemsError.message);
-      setLoading(false);
-      return;
+    if (orderId) {
+      clearCart();
+      setStep(4);
     }
-
-    clearCart();
-    setStep(4);
     setLoading(false);
   };
 

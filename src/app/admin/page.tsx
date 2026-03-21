@@ -21,7 +21,7 @@ import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import Image from "next/image";
 
-const ADMIN_EMAIL = "vitzo.hq@gmail.com";
+// Admin access is now controlled by the 'role' column in the profiles table
 
 interface Product {
   id: string;
@@ -52,6 +52,7 @@ interface Agent {
 
 export default function AdminPortal() {
   const [user, setUser] = useState<User | null>(null);
+  const [profileRole, setProfileRole] = useState<string>('customer');
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,7 +61,7 @@ export default function AdminPortal() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [_team, _setTeam] = useState<{email: string, role: string}[]>([
-    { email: "vitzo.hq@gmail.com", role: "Owner" }
+    { email: "Admin Group", role: "Owner" }
   ]);
   const [_inviteEmail, _setInviteEmail] = useState("");
 
@@ -68,20 +69,34 @@ export default function AdminPortal() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkUser = async () => {
+    const checkAdmin = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.email !== ADMIN_EMAIL) {
+      
+      if (!session?.user) {
         setLoading(false);
-      } else {
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profile?.role === 'admin') {
         setUser(session.user);
         fetchData();
       }
+      setLoading(false);
     };
 
-    checkUser();
+    checkAdmin();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (!session) {
+        setProfileRole('customer');
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -183,7 +198,7 @@ export default function AdminPortal() {
 
   if (loading && !user) return <div className="p-20 text-center font-black animate-pulse text-[var(--color-primary-green)]">SECURE VERIFICATION...</div>;
 
-  if (!user || user.email !== ADMIN_EMAIL) {
+  if (!user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-white">
         <h1 className="text-4xl font-black text-red-500 mb-4 uppercase italic tracking-tighter">Access Denied</h1>

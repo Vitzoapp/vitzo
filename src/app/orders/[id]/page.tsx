@@ -123,7 +123,12 @@ export default function OrderTrackingPage() {
         comment: _comment
       }]);
 
-    if (!error) setHasRated(true);
+    if (error) {
+      console.error("Error submitting rating:", error);
+      alert("Could not submit rating. Please try again.");
+    } else {
+      setHasRated(true);
+    }
     setSubmittingRating(false);
   };
 
@@ -149,7 +154,7 @@ export default function OrderTrackingPage() {
           View My Orders
         </button>
         {errorStatus === 403 && (
-          <p className="text-[10px] font-black uppercase text-slate-300 tracking-[0.2em] italic">Code: ERR_ACCESS_RESTRICTED</p>
+          <p className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] italic">Code: ERR_ACCESS_RESTRICTED</p>
         )}
       </div>
     </div>

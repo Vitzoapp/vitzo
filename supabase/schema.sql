@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     street TEXT,
     landmark TEXT,
     area TEXT,
+    role TEXT DEFAULT 'customer' CHECK (role IN ('customer', 'admin', 'support')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -197,7 +198,10 @@ BEGIN
     FOR tbl IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename IN ('categories', 'products', 'orders', 'order_items', 'profiles', 'agents', 'agent_ratings'))
     LOOP
         EXECUTE format('DROP POLICY IF EXISTS "Admin full access on %I" ON %I', tbl.tablename, tbl.tablename);
-        EXECUTE format('CREATE POLICY "Admin full access on %I" ON %I FOR ALL TO authenticated USING (auth.jwt() ->> ''email'' = ''vitzo.hq@gmail.com'')', tbl.tablename, tbl.tablename);
+        -- Updated Admin Policy to use Profile Role
+        EXECUTE format('CREATE POLICY "Admin full access on %I" ON %I FOR ALL TO authenticated USING (
+            EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = ''admin'')
+        )', tbl.tablename, tbl.tablename);
     END LOOP;
 END $$;
 
@@ -212,6 +216,75 @@ DROP POLICY IF EXISTS "Admin Manage Product Images" ON storage.objects;
 CREATE POLICY "Admin Manage Product Images" ON storage.objects FOR ALL TO authenticated USING (bucket_id = 'product-images' AND (auth.jwt() ->> 'email' = 'vitzo.hq@gmail.com'));
 
 -- 7. FUNCTIONS AND TRIGGERS
+
+-- Transactional Checkout and Stock Management
+CREATE OR REPLACE FUNCTION process_checkout(
+  p_user_id UUID, 
+  p_total_amount DECIMAL, 
+  p_shipping_house_no TEXT,
+  p_shipping_street TEXT,
+  p_shipping_landmark TEXT,
+  p_shipping_area TEXT,
+  p_mobile_number TEXT,
+  p_payment_method TEXT,
+  p_items JSONB -- Array of { product_id, quantity, price }
+) RETURNS UUID AS $$
+DECLARE
+  v_order_id UUID;
+  item JSONB;
+  v_current_stock INTEGER;
+BEGIN
+  -- 1. Create the order
+  INSERT INTO orders (
+    user_id, 
+    total_amount, 
+    status,
+    shipping_house_no,
+    shipping_street,
+    shipping_landmark,
+    shipping_area,
+    mobile_number,
+    payment_method,
+    payment_status
+  )
+  VALUES (
+    p_user_id, 
+    p_total_amount, 
+    'pending',
+    p_shipping_house_no,
+    p_shipping_street,
+    p_shipping_landmark,
+    p_shipping_area,
+    p_mobile_number,
+    p_payment_method,
+    'pending'
+  )
+  RETURNING id INTO v_order_id;
+
+  -- 2. Loop through items, check stock, and deduct
+  FOR item IN SELECT * FROM jsonb_array_elements(p_items)
+  LOOP
+    -- Lock the row for update to prevent race conditions
+    SELECT stock INTO v_current_stock FROM products 
+    WHERE id = (item->>'product_id')::UUID FOR UPDATE;
+
+    IF v_current_stock < (item->>'quantity')::INTEGER THEN
+      RAISE EXCEPTION 'Not enough stock for product %', (SELECT name FROM products WHERE id = (item->>'product_id')::UUID);
+    END IF;
+
+    -- Deduct stock
+    UPDATE products 
+    SET stock = stock - (item->>'quantity')::INTEGER
+    WHERE id = (item->>'product_id')::UUID;
+
+    -- Insert order item
+    INSERT INTO order_items (order_id, product_id, quantity, price_at_time_of_order)
+    VALUES (v_order_id, (item->>'product_id')::UUID, (item->>'quantity')::INTEGER, (item->>'price')::DECIMAL);
+  END LOOP;
+
+  RETURN v_order_id;
+END;
+$$ LANGUAGE plpgsql;
 
 -- Update Agent Stats (Rating and Orders)
 CREATE OR REPLACE FUNCTION update_agent_stats()
@@ -267,12 +340,24 @@ BEGIN
         NEW.delivery_status := 'assigned';
     END IF;
 
-    RETURN NEW;
+-- Broadcast Model: Function for agents to claim orders
+CREATE OR REPLACE FUNCTION claim_order(p_order_id UUID, p_agent_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+    UPDATE orders
+    SET agent_id = p_agent_id,
+        delivery_status = 'assigned'
+    WHERE id = p_order_id 
+      AND agent_id IS NULL 
+      AND status = 'pending';
+    
+    RETURN FOUND;
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS tr_auto_assign_order ON orders;
-CREATE TRIGGER tr_auto_assign_order BEFORE INSERT ON orders FOR EACH ROW EXECUTE FUNCTION auto_assign_order_to_agent();
+-- tr_auto_assign_order is DISABLED for production in favor of Broadcast Model
+-- DROP TRIGGER IF EXISTS tr_auto_assign_order ON orders;
+-- CREATE TRIGGER tr_auto_assign_order BEFORE INSERT ON orders FOR EACH ROW EXECUTE FUNCTION auto_assign_order_to_agent();
 
 -- 8. SEEDING (Idempotent)
 INSERT INTO categories (id, name, slug) VALUES 

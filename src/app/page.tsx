@@ -1,14 +1,8 @@
-"use client";
-
 import Link from "next/link";
 import { ShoppingBag, Zap, ShieldCheck, MapPin } from "lucide-react";
 import CategorySection from "@/components/CategorySection";
 import CountdownTimer from "@/components/CountdownTimer";
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import { useSearch } from "@/context/SearchContext";
-
-import ProductCard from "@/components/ProductCard";
+import { createClient } from "@/utils/supabase/server";
 
 interface Category {
   id: string;
@@ -25,29 +19,26 @@ interface Product {
   categories?: { name: string };
 }
 
-export default function Home() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const { searchQuery } = useSearch();
+export default async function Home() {
+  const supabase = await createClient();
+  
+  const [catRes, prodRes] = await Promise.all([
+    supabase.from('categories').select('*'),
+    supabase.from('products').select('*, categories(name, slug)').limit(50)
+  ]);
 
-  useEffect(() => {
-    const fetchHomeData = async () => {
-      const [catRes, prodRes] = await Promise.all([
-        supabase.from('categories').select('*'),
-        supabase.from('products').select('*, categories(name, slug)')
-      ]);
+  const categories = catRes.data || [] as Category[];
+  const products = prodRes.data || [] as Product[];
 
-      if (catRes.data) setCategories(catRes.data);
-      if (prodRes.data) setProducts(prodRes.data);
-    };
-
-    fetchHomeData();
-  }, []);
-
-  // Filter products based on search
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Dynamic delivery time calculation
+  const now = new Date();
+  const cutoff = new Date();
+  cutoff.setHours(11, 0, 0, 0);
+  
+  const isAfterCutoff = now > cutoff;
+  const deliveryDay = isAfterCutoff ? "TOMORROW" : "TODAY";
+  const orderByTime = "11:00 AM"; // Always 11 AM local for the next batch
+  const deliveryTime = "1:00 PM";
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -63,11 +54,11 @@ export default function Home() {
               
               <h1 className="font-outfit text-6xl font-black leading-[0.9] sm:text-8xl text-white tracking-tighter">
                 ORDER BY <br />
-                <span className="text-white drop-shadow-2xl">11:00 AM</span>
+                <span className="text-white drop-shadow-2xl">{orderByTime}</span>
               </h1>
               
               <p className="text-2xl font-black text-white/80 italic tracking-tight">
-                For delivery today at <span className="text-white underline decoration-4 decoration-white/50 underline-offset-8">1:00 PM</span>
+                For delivery {deliveryDay} at <span className="text-white underline decoration-4 decoration-white/50 underline-offset-8">{deliveryTime}</span>
               </p>
 
               <div className="flex flex-wrap gap-4 pt-4">
@@ -129,47 +120,24 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 space-y-20">
-        {searchQuery ? (
-          <div className="space-y-8">
-            <h2 className="text-3xl font-black text-slate-900">Found {filteredProducts.length} products for &quot;{searchQuery}&quot;</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {filteredProducts.map(p => (
-                <ProductCard 
-                  key={p.id}
-                  id={p.id}
-                  name={p.name}
-                  price={p.price}
-                  image={p.image_url}
-                  category={p.categories?.name || 'Uncategorized'}
-                />
-              ))}
-            </div>
-            {filteredProducts.length === 0 && (
-              <div className="text-center py-20">
-                <p className="text-2xl font-bold text-slate-400 italic">No products matched your search.</p>
-              </div>
-            )}
-          </div>
-        ) : (
-          categories.map((cat) => {
-            const catProducts = products.filter(p => p.category_id === cat.id);
-            if (catProducts.length === 0) return null;
-            return (
-              <CategorySection 
-                key={cat.id}
-                title={cat.name}
-                category={cat.slug}
-                products={catProducts.map(p => ({
-                  id: p.id,
-                  name: p.name,
-                  price: p.price,
-                  image: p.image_url,
-                  category: cat.name
-                }))}
-              />
-            );
-          })
-        )}
+        {categories.map((cat) => {
+          const catProducts = products.filter(p => p.category_id === cat.id);
+          if (catProducts.length === 0) return null;
+          return (
+            <CategorySection 
+              key={cat.id}
+              title={cat.name}
+              category={cat.slug}
+              products={catProducts.map(p => ({
+                id: p.id,
+                name: p.name,
+                price: p.price,
+                image: p.image_url,
+                category: cat.name
+              }))}
+            />
+          );
+        })}
       </main>
     </div>
   );

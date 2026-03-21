@@ -9,6 +9,7 @@ import { useCart } from "@/context/CartContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useSearch } from "@/context/SearchContext";
+import { searchProducts } from "@/app/actions/search";
 
 interface Product {
   id: string;
@@ -31,6 +32,7 @@ export default function Navbar() {
   const { totalItems } = useCart();
   const { searchQuery, setSearchQuery } = useSearch();
   const [user, setUser] = useState<User | null>(null);
+  const [profileRole, setProfileRole] = useState<string>('customer');
   const [agent, setAgent] = useState<Agent | null>(null);
   const [_isSearchFocused, _setIsSearchFocused] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -41,13 +43,21 @@ export default function Navbar() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) fetchAgent(session.user.id);
+      if (session?.user) {
+        fetchAgent(session.user.id);
+        fetchProfile(session.user.id);
+      }
     });
-
+ 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) fetchAgent(session.user.id);
-      else setAgent(null);
+      if (session?.user) {
+        fetchAgent(session.user.id);
+        fetchProfile(session.user.id);
+      } else {
+        setAgent(null);
+        setProfileRole('customer');
+      }
     });
 
     const fetchAgent = async (userId: string) => {
@@ -55,20 +65,34 @@ export default function Navbar() {
       setAgent(data);
     };
 
-    const fetchProducts = async () => {
-      const { data } = await supabase.from('products').select('*');
-      if (data) setSearchResults(data);
+    const fetchProfile = async (userId: string) => {
+        const { data } = await supabase.from('profiles').select('role').eq('id', userId).single();
+        if (data) setProfileRole(data.role);
     };
-    fetchProducts();
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const _filteredProducts = searchResults.filter(p => 
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  ).slice(0, 5);
+  // Server-side search logic with debounce
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
 
-  const isAdmin = user?.email === "vitzo.hq@gmail.com";
+    const timer = setTimeout(async () => {
+      _setIsSearching(true);
+      const results = await searchProducts(searchQuery);
+      setSearchResults(results as unknown as Product[]);
+      _setIsSearching(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const _filteredProducts = searchResults; // Already filtered by server
+
+  const isAdmin = profileRole === 'admin';
 
   const handleSearch = (e?: React.FormEvent) => {
     e?.preventDefault();

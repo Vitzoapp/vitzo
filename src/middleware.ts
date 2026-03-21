@@ -26,7 +26,18 @@ export async function middleware(request: NextRequest) {
     );
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user || user.email !== 'vitzo.hq@gmail.com') {
+    if (!user) {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+
+    // Check Role-Based Access Control
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile || profile.role !== 'admin') {
       return NextResponse.redirect(new URL('/', request.url));
     }
   }
