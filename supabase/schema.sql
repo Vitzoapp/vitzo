@@ -46,7 +46,9 @@ CREATE TABLE IF NOT EXISTS agents (
     salary DECIMAL(10,2) DEFAULT 0,
     total_orders INTEGER DEFAULT 0,
     average_rating DECIMAL(3,2) DEFAULT 0,
-    area TEXT,
+    working_area TEXT CHECK (working_area IN ('Ramanattukara', 'Azhinjilam', 'Farook College')),
+    vehicle_type TEXT CHECK (vehicle_type IN ('Bike', 'Scooter', 'Car', 'Van')),
+    license_number TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -133,6 +135,8 @@ CREATE POLICY "Users insert their own order items" ON order_items FOR INSERT TO 
 -- Agents: Own record and public stats
 DROP POLICY IF EXISTS "Agents view own" ON agents;
 CREATE POLICY "Agents view own" ON agents FOR SELECT TO authenticated USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users insert own agent application" ON agents;
+CREATE POLICY "Users insert own agent application" ON agents FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 DROP POLICY IF EXISTS "Public view agent stats" ON agents;
 CREATE POLICY "Public view agent stats" ON agents FOR SELECT USING (status = 'approved');
 

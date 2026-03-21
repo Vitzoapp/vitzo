@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { User, Phone, MapPin, Send, ShieldCheck, Clock, CheckCircle2 } from "lucide-react";
+import { User, Phone, MapPin, Send, ShieldCheck, Clock, CheckCircle2, Car, CreditCard } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 
 export default function AgentRegisterPage() {
@@ -15,14 +16,16 @@ export default function AgentRegisterPage() {
   const [formData, setFormData] = useState({
     full_name: "",
     phone_number: "",
-    area: ""
+    working_area: "Ramanattukara",
+    vehicle_type: "Bike",
+    license_number: ""
   });
 
   useEffect(() => {
     const checkStatus = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        router.push("/login");
+        setLoading(false);
         return;
       }
       setUser(user);
@@ -44,6 +47,15 @@ export default function AgentRegisterPage() {
     checkStatus();
   }, [router]);
 
+  const handleGoogleLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/agent/register`
+      }
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -55,7 +67,9 @@ export default function AgentRegisterPage() {
           user_id: user?.id,
           full_name: formData.full_name,
           phone_number: formData.phone_number,
-          area: formData.area,
+          working_area: formData.working_area,
+          vehicle_type: formData.vehicle_type,
+          license_number: formData.license_number,
           status: 'pending'
         }
       ]);
@@ -99,6 +113,23 @@ export default function AgentRegisterPage() {
             <div className="bg-white rounded-[40px] p-8 md:p-12 border border-gray-100 shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
               <h2 className="text-2xl font-black text-slate-900 uppercase italic tracking-tight mb-8">Agent Application</h2>
               
+              {!user ? (
+                <div className="text-center py-8">
+                  <p className="text-slate-500 font-medium mb-6">Please sign in to continue your application.</p>
+                  <button 
+                    onClick={handleGoogleLogin}
+                    className="w-full h-14 bg-white border-2 border-gray-100 rounded-2xl flex items-center justify-center gap-3 hover:bg-gray-50 transition-all shadow-sm"
+                  >
+                    <Image src="https://www.google.com/favicon.ico" alt="Google" width={20} height={20} />
+                    <span className="font-bold text-slate-900">Sign in with Google</span>
+                  </button>
+                  <div className="mt-6 flex items-center gap-4">
+                    <div className="h-px bg-gray-100 flex-1" />
+                    <span className="text-[10px] font-black text-slate-300 uppercase italic tracking-widest">Secure Auth</span>
+                    <div className="h-px bg-gray-100 flex-1" />
+                  </div>
+                </div>
+              ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Full Name</label>
@@ -130,17 +161,54 @@ export default function AgentRegisterPage() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Working Area</label>
+                    <div className="relative group">
+                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-[var(--color-primary-green)] transition-all" />
+                      <select 
+                        required
+                        className="w-full h-14 bg-gray-50 border-2 border-gray-50 rounded-2xl pl-12 pr-4 font-bold text-slate-900 focus:bg-white focus:border-[var(--color-primary-green)] outline-none transition-all appearance-none"
+                        value={formData.working_area}
+                        onChange={(e) => setFormData({...formData, working_area: e.target.value})}
+                      >
+                        <option value="Ramanattukara">Ramanattukara</option>
+                        <option value="Azhinjilam">Azhinjilam</option>
+                        <option value="Farook College">Farook College</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Vehicle Type</label>
+                    <div className="relative group">
+                      <Car className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-[var(--color-primary-green)] transition-all" />
+                      <select 
+                        required
+                        className="w-full h-14 bg-gray-50 border-2 border-gray-50 rounded-2xl pl-12 pr-4 font-bold text-slate-900 focus:bg-white focus:border-[var(--color-primary-green)] outline-none transition-all appearance-none"
+                        value={formData.vehicle_type}
+                        onChange={(e) => setFormData({...formData, vehicle_type: e.target.value})}
+                      >
+                        <option value="Bike">Bike</option>
+                        <option value="Scooter">Scooter</option>
+                        <option value="Car">Car</option>
+                        <option value="Van">Van</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Preferred Area</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">License Number</label>
                   <div className="relative group">
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-[var(--color-primary-green)] transition-all" />
+                    <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-[var(--color-primary-green)] transition-all" />
                     <input 
                       required
                       type="text" 
-                      placeholder="Neighborhood / City Area"
+                      placeholder="Enter DL Number"
                       className="w-full h-14 bg-gray-50 border-2 border-gray-50 rounded-2xl pl-12 pr-4 font-bold text-slate-900 focus:bg-white focus:border-[var(--color-primary-green)] outline-none transition-all"
-                      value={formData.area}
-                      onChange={(e) => setFormData({...formData, area: e.target.value})}
+                      value={formData.license_number}
+                      onChange={(e) => setFormData({...formData, license_number: e.target.value})}
                     />
                   </div>
                 </div>
@@ -162,6 +230,7 @@ export default function AgentRegisterPage() {
                   </p>
                 </div>
               </form>
+              )}
             </div>
           </div>
         </div>

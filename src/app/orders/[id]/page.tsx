@@ -121,7 +121,25 @@ export default function OrderTrackingPage() {
   };
 
   if (loading) return <div className="min-h-screen bg-white"><div className="p-20 animate-pulse bg-gray-50 h-screen" /></div>;
-  if (!order) return <div className="min-h-screen bg-white flex items-center justify-center"><p>Order not found</p></div>;
+  if (!order) return (
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center text-center px-4">
+      <div className="h-24 w-24 rounded-[32px] bg-red-50 flex items-center justify-center text-red-500 mb-8">
+        <Package className="h-12 w-12" />
+      </div>
+      <h2 className="font-outfit text-4xl font-black text-slate-950 uppercase tracking-tighter italic mb-4">
+        Order <span className="text-red-500">Not Found</span>
+      </h2>
+      <p className="text-slate-500 font-medium max-w-sm mb-8 leading-relaxed">
+        We couldn&apos;t find an order with this ID. It might be incorrect or you may not have permission to view it.
+      </p>
+      <button 
+        onClick={() => router.push('/orders')}
+        className="h-14 px-8 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest italic text-sm hover:bg-[var(--color-primary-green)] transition-all shadow-xl"
+      >
+        View All Orders
+      </button>
+    </div>
+  );
 
   const steps = [
     { label: 'Confirmed', status: 'pending', description: 'Agent will be assigned shortly', icon: CheckCircle2 },
