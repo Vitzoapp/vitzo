@@ -130,7 +130,7 @@ export default function OrderTrackingPage() {
       setHasRated(true);
     } catch (error) {
       console.error("Error submitting rating:", error);
-      alert("Could not submit rating: " + (error as any).message);
+      alert("Could not submit rating: " + (error instanceof Error ? error.message : "An unknown error occurred"));
     } finally {
       setSubmittingRating(false);
     }
