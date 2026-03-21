@@ -33,7 +33,6 @@ interface Order {
   shipping_street: string;
   shipping_area: string;
   mobile_number: string;
-  delivery_pin?: string;
   order_items: {
     id: string;
     quantity: number;
@@ -269,19 +268,38 @@ const toggleActive = async () => {
                         )}
                         {order.delivery_status === 'out_for_delivery' && (
                           <button 
-                            onClick={() => {
+                            onClick={async () => {
                               // Prompt the agent for the PIN
                               const enteredPin = window.prompt("Enter the 4-digit Delivery PIN from the customer:");
                               
                               // If the user clicks Cancel, exit early
                               if (enteredPin === null) return;
                               
-                              // Verify the PIN
-                              if (enteredPin === order.delivery_pin) {
-                                updateOrderStatus(order.id, 'delivered');
-                              } else {
-                                alert("❌ Incorrect PIN. Please ask the customer for the correct 4-digit code.");
-                              }
+                              // Verify the PIN via RPC (Secure)
+                              const verifyPinAndComplete = async (orderId: string, pin: string) => {
+                                setIsUpdating(true);
+                                const { data: success, error } = await supabase.rpc('verify_delivery_pin', {
+                                  p_order_id: orderId,
+                                  p_entered_pin: pin
+                                });
+
+                                if (error) {
+                                  console.error("Verification failed:", error.message);
+                                  alert("Verification error. Please try again.");
+                                  setIsUpdating(false);
+                                  return;
+                                }
+
+                                if (success) {
+                                  // Update local UI state
+                                  setOrders(prev => prev.map(o => o.id === orderId ? { ...o, delivery_status: 'delivered' } : o));
+                                } else {
+                                  alert("❌ Incorrect PIN. Please ask the customer for the correct 4-digit code.");
+                                }
+                                setIsUpdating(false);
+                              };
+
+                              await verifyPinAndComplete(order.id, enteredPin);
                             }}
                             className="w-full h-14 bg-[var(--color-primary-green)] text-white rounded-[20px] font-black uppercase tracking-widest italic text-sm shadow-lg hover:bg-green-600 transition-all active:scale-95"
                           >

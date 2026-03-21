@@ -1,5 +1,4 @@
--- VITZO UNIFIED DATABASE SCHEMA
--- This script combines all tables, policies, triggers, and seeding into one idempotent file.
+-- VITZO UNIFIED DATABASE SCHEMA (PRODUCTION-READY)
 -- Run this in your Supabase SQL Editor.
 
 -- 1. BASE EXTENSIONS
@@ -33,9 +32,17 @@ CREATE TABLE IF NOT EXISTS profiles (
     street TEXT,
     landmark TEXT,
     area TEXT,
-    role TEXT DEFAULT 'customer' CHECK (role IN ('customer', 'admin', 'support')),
+    role TEXT DEFAULT 'customer' CHECK (role IN ('customer', 'admin', 'agent', 'support')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Idempotent column addition for role in existing profiles
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='profiles' AND column_name='role') THEN
+        ALTER TABLE profiles ADD COLUMN role TEXT DEFAULT 'customer' CHECK (role IN ('customer', 'admin', 'agent', 'support'));
+    END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS agents (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -47,28 +54,18 @@ CREATE TABLE IF NOT EXISTS agents (
     salary DECIMAL(10,2) DEFAULT 0,
     total_orders INTEGER DEFAULT 0,
     average_rating DECIMAL(3,2) DEFAULT 0,
+    working_area TEXT CHECK (working_area IN ('Ramanattukara', 'Azhinjilam', 'Farook College')),
+    vehicle_type TEXT CHECK (vehicle_type IN ('Bike', 'Scooter', 'Car', 'Van')),
+    license_number TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
--- Idempotent column additions for existing agents table
-DO $$ 
-BEGIN 
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='agents' AND column_name='working_area') THEN
-        ALTER TABLE agents ADD COLUMN working_area TEXT CHECK (working_area IN ('Ramanattukara', 'Azhinjilam', 'Farook College'));
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='agents' AND column_name='vehicle_type') THEN
-        ALTER TABLE agents ADD COLUMN vehicle_type TEXT CHECK (vehicle_type IN ('Bike', 'Scooter', 'Car', 'Van'));
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='agents' AND column_name='license_number') THEN
-        ALTER TABLE agents ADD COLUMN license_number TEXT;
-    END IF;
-END $$;
 
 CREATE TABLE IF NOT EXISTS orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES auth.users(id),
+    agent_id UUID REFERENCES agents(id),
     status TEXT DEFAULT 'pending',
-    delivery_status TEXT DEFAULT 'pending' CHECK (delivery_status IN ('pending', 'assigned', 'out_for_delivery', 'delivered')),
+    delivery_status TEXT DEFAULT 'pending' CHECK (delivery_status IN ('pending', 'ready_for_pickup', 'assigned', 'out_for_delivery', 'delivered')),
     total_amount DECIMAL(10,2) NOT NULL,
     shipping_house_no TEXT,
     shipping_street TEXT,
@@ -77,19 +74,9 @@ CREATE TABLE IF NOT EXISTS orders (
     mobile_number TEXT,
     payment_method TEXT,
     payment_status TEXT DEFAULT 'pending',
+    delivery_pin TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
--- Idempotent column additions for existing orders table
-DO $$ 
-BEGIN 
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='agent_id') THEN
-        ALTER TABLE orders ADD COLUMN agent_id UUID REFERENCES agents(id);
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='delivery_pin') THEN
-        ALTER TABLE orders ADD COLUMN delivery_pin TEXT;
-    END IF;
-END $$;
 
 CREATE TABLE IF NOT EXISTS order_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -110,7 +97,18 @@ CREATE TABLE IF NOT EXISTS agent_ratings (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 3. ENABLE RLS
+-- 3. SECURITY DEFINER FUNCTIONS (For RBAC without RLS infinite recursion)
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS BOOLEAN AS $$
+DECLARE
+  v_role TEXT;
+BEGIN
+  SELECT role INTO v_role FROM profiles WHERE id = auth.uid();
+  RETURN v_role = 'admin';
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 4. ENABLE RLS
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
@@ -119,32 +117,31 @@ ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_ratings ENABLE ROW LEVEL SECURITY;
 
--- 4. RLS POLICIES (AUTHENTICATED USERS)
+-- 5. RLS POLICIES (AUTHENTICATED USERS)
 
--- Categories: Public Read
+-- Categories & Products: Public Read
 DROP POLICY IF EXISTS "Public Read Categories" ON categories;
 CREATE POLICY "Public Read Categories" ON categories FOR SELECT USING (true);
 
--- Products: Public Read
 DROP POLICY IF EXISTS "Public Read Products" ON products;
 CREATE POLICY "Public Read Products" ON products FOR SELECT USING (true);
 
--- Profiles: Users manage own
+-- Profiles
 DROP POLICY IF EXISTS "Users view their own profiles" ON profiles;
-CREATE POLICY "Users view their own profiles" ON profiles FOR SELECT TO authenticated USING (auth.uid() = id);
+CREATE POLICY "Users view their own profiles" ON profiles FOR SELECT TO authenticated USING (auth.uid() = id OR is_admin());
 DROP POLICY IF EXISTS "Users update their own profiles" ON profiles;
 CREATE POLICY "Users update their own profiles" ON profiles FOR UPDATE TO authenticated USING (auth.uid() = id);
 DROP POLICY IF EXISTS "Users insert their own profiles" ON profiles;
 CREATE POLICY "Users insert their own profiles" ON profiles FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
 
--- Orders: Users view and insert
+-- Orders
 DROP POLICY IF EXISTS "Users view their own orders" ON orders;
 CREATE POLICY "Users view their own orders" ON orders FOR SELECT TO authenticated USING (
     auth.uid() = user_id OR 
-    agent_id IN (SELECT id FROM agents WHERE user_id = auth.uid())
+    agent_id IN (SELECT id FROM agents WHERE user_id = auth.uid()) OR
+    is_admin()
 );
-DROP POLICY IF EXISTS "Users insert their own orders" ON orders;
-CREATE POLICY "Users insert their own orders" ON orders FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+-- NOTE: Manual INSERT policy on orders/order_items removed. We now enforce process_checkout RPC.
 
 -- Agents: Update assigned orders
 DROP POLICY IF EXISTS "Agents update assigned orders" ON orders;
@@ -153,7 +150,7 @@ FOR UPDATE TO authenticated
 USING (agent_id IN (SELECT id FROM agents WHERE user_id = auth.uid())) 
 WITH CHECK (agent_id IN (SELECT id FROM agents WHERE user_id = auth.uid()));
 
--- Order Items: Users view and insert
+-- Order Items
 DROP POLICY IF EXISTS "Users view their own order items" ON order_items;
 CREATE POLICY "Users view their own order items" ON order_items FOR SELECT TO authenticated USING (
     EXISTS (
@@ -163,16 +160,12 @@ CREATE POLICY "Users view their own order items" ON order_items FOR SELECT TO au
             orders.user_id = auth.uid() OR 
             orders.agent_id IN (SELECT id FROM agents WHERE user_id = auth.uid())
         )
-    )
-);
-DROP POLICY IF EXISTS "Users insert their own order items" ON order_items;
-CREATE POLICY "Users insert their own order items" ON order_items FOR INSERT TO authenticated WITH CHECK (
-    EXISTS (SELECT 1 FROM orders WHERE orders.id = order_items.order_id AND orders.user_id = auth.uid())
+    ) OR is_admin()
 );
 
--- Agents: Own record and public stats
+-- Agents
 DROP POLICY IF EXISTS "Agents view own" ON agents;
-CREATE POLICY "Agents view own" ON agents FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "Agents view own" ON agents FOR SELECT TO authenticated USING (auth.uid() = user_id OR is_admin());
 DROP POLICY IF EXISTS "Agents update own status" ON agents;
 CREATE POLICY "Agents update own status" ON agents FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 DROP POLICY IF EXISTS "Users insert own agent application" ON agents;
@@ -180,7 +173,7 @@ CREATE POLICY "Users insert own agent application" ON agents FOR INSERT TO authe
 DROP POLICY IF EXISTS "Public view agent stats" ON agents;
 CREATE POLICY "Public view agent stats" ON agents FOR SELECT USING (status = 'approved');
 
--- Agent Ratings: Insert and View
+-- Agent Ratings
 DROP POLICY IF EXISTS "Users insert agent ratings" ON agent_ratings;
 CREATE POLICY "Users insert agent ratings" ON agent_ratings FOR INSERT TO authenticated WITH CHECK (
     EXISTS (SELECT 1 FROM orders WHERE orders.id = agent_ratings.order_id AND orders.user_id = auth.uid())
@@ -190,7 +183,7 @@ CREATE POLICY "Agents view their ratings" ON agent_ratings FOR SELECT TO authent
     EXISTS (SELECT 1 FROM agents WHERE agents.id = agent_ratings.agent_id AND agents.user_id = auth.uid())
 );
 
--- 5. ADMIN POLICIES (vitzo.hq@gmail.com)
+-- 6. ADMIN POLICIES (Dynamic RBAC instead of hardcoded emails)
 DO $$ 
 DECLARE 
     tbl RECORD;
@@ -198,14 +191,11 @@ BEGIN
     FOR tbl IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename IN ('categories', 'products', 'orders', 'order_items', 'profiles', 'agents', 'agent_ratings'))
     LOOP
         EXECUTE format('DROP POLICY IF EXISTS "Admin full access on %I" ON %I', tbl.tablename, tbl.tablename);
-        -- Updated Admin Policy to use Profile Role
-        EXECUTE format('CREATE POLICY "Admin full access on %I" ON %I FOR ALL TO authenticated USING (
-            EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = ''admin'')
-        )', tbl.tablename, tbl.tablename);
+        EXECUTE format('CREATE POLICY "Admin full access on %I" ON %I FOR ALL TO authenticated USING (is_admin())', tbl.tablename, tbl.tablename);
     END LOOP;
 END $$;
 
--- 6. STORAGE SETUP
+-- 7. STORAGE SETUP
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('product-images', 'product-images', true)
 ON CONFLICT (id) DO NOTHING;
@@ -213,80 +203,11 @@ ON CONFLICT (id) DO NOTHING;
 DROP POLICY IF EXISTS "Public Read Product Images" ON storage.objects;
 CREATE POLICY "Public Read Product Images" ON storage.objects FOR SELECT USING (bucket_id = 'product-images');
 DROP POLICY IF EXISTS "Admin Manage Product Images" ON storage.objects;
-CREATE POLICY "Admin Manage Product Images" ON storage.objects FOR ALL TO authenticated USING (bucket_id = 'product-images' AND (auth.jwt() ->> 'email' = 'vitzo.hq@gmail.com'));
+CREATE POLICY "Admin Manage Product Images" ON storage.objects FOR ALL TO authenticated USING (bucket_id = 'product-images' AND is_admin());
 
--- 7. FUNCTIONS AND TRIGGERS
+-- 8. FUNCTIONS AND TRIGGERS
 
--- Transactional Checkout and Stock Management
-CREATE OR REPLACE FUNCTION process_checkout(
-  p_user_id UUID, 
-  p_total_amount DECIMAL, 
-  p_shipping_house_no TEXT,
-  p_shipping_street TEXT,
-  p_shipping_landmark TEXT,
-  p_shipping_area TEXT,
-  p_mobile_number TEXT,
-  p_payment_method TEXT,
-  p_items JSONB -- Array of { product_id, quantity, price }
-) RETURNS UUID AS $$
-DECLARE
-  v_order_id UUID;
-  item JSONB;
-  v_current_stock INTEGER;
-BEGIN
-  -- 1. Create the order
-  INSERT INTO orders (
-    user_id, 
-    total_amount, 
-    status,
-    shipping_house_no,
-    shipping_street,
-    shipping_landmark,
-    shipping_area,
-    mobile_number,
-    payment_method,
-    payment_status
-  )
-  VALUES (
-    p_user_id, 
-    p_total_amount, 
-    'pending',
-    p_shipping_house_no,
-    p_shipping_street,
-    p_shipping_landmark,
-    p_shipping_area,
-    p_mobile_number,
-    p_payment_method,
-    'pending'
-  )
-  RETURNING id INTO v_order_id;
-
-  -- 2. Loop through items, check stock, and deduct
-  FOR item IN SELECT * FROM jsonb_array_elements(p_items)
-  LOOP
-    -- Lock the row for update to prevent race conditions
-    SELECT stock INTO v_current_stock FROM products 
-    WHERE id = (item->>'product_id')::UUID FOR UPDATE;
-
-    IF v_current_stock < (item->>'quantity')::INTEGER THEN
-      RAISE EXCEPTION 'Not enough stock for product %', (SELECT name FROM products WHERE id = (item->>'product_id')::UUID);
-    END IF;
-
-    -- Deduct stock
-    UPDATE products 
-    SET stock = stock - (item->>'quantity')::INTEGER
-    WHERE id = (item->>'product_id')::UUID;
-
-    -- Insert order item
-    INSERT INTO order_items (order_id, product_id, quantity, price_at_time_of_order)
-    VALUES (v_order_id, (item->>'product_id')::UUID, (item->>'quantity')::INTEGER, (item->>'price')::DECIMAL);
-  END LOOP;
-
-  RETURN v_order_id;
-END;
-$$ LANGUAGE plpgsql;
-
--- Update Agent Stats (Rating and Orders)
+-- Update Agent Stats
 CREATE OR REPLACE FUNCTION update_agent_stats()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -316,8 +237,97 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Secure PIN Verification RPC
+CREATE OR REPLACE FUNCTION verify_delivery_pin(p_order_id UUID, p_entered_pin TEXT)
+RETURNS BOOLEAN AS $$
+DECLARE
+    v_actual_pin TEXT;
+    v_agent_id UUID;
+BEGIN
+    -- Get the actual pin and the assigned agent
+    SELECT delivery_pin, agent_id INTO v_actual_pin, v_agent_id 
+    FROM orders 
+    WHERE id = p_order_id;
+
+    -- Security: Only the assigned agent (or admin) can verify the pin
+    IF v_agent_id NOT IN (SELECT id FROM agents WHERE user_id = auth.uid()) 
+       AND NOT EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin') THEN
+        RAISE EXCEPTION 'Unauthorized';
+    END IF;
+
+    -- Verify and Update
+    IF v_actual_pin = p_entered_pin THEN
+        UPDATE orders 
+        SET delivery_status = 'delivered' 
+        WHERE id = p_order_id;
+        RETURN TRUE;
+    ELSE
+        RETURN FALSE;
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 DROP TRIGGER IF EXISTS tr_generate_pin ON orders;
 CREATE TRIGGER tr_generate_pin BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION generate_delivery_pin();
+
+-- TRANSACTIONAL CHECKOUT FUNCTION (Atomic Order Creation & Inventory Check)
+CREATE OR REPLACE FUNCTION process_checkout(
+  p_total_amount DECIMAL, 
+  p_shipping_house_no TEXT,
+  p_shipping_street TEXT,
+  p_shipping_landmark TEXT,
+  p_shipping_area TEXT,
+  p_mobile_number TEXT,
+  p_payment_method TEXT,
+  p_items JSONB -- Array of { product_id, quantity, price }
+) RETURNS UUID AS $$
+DECLARE
+  v_order_id UUID;
+  item JSONB;
+  v_current_stock INTEGER;
+  v_user_id UUID;
+BEGIN
+  v_user_id := auth.uid();
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  -- 1. Create the order
+  INSERT INTO orders (
+    user_id, total_amount, status, delivery_status, 
+    shipping_house_no, shipping_street, shipping_landmark, shipping_area, 
+    mobile_number, payment_method, payment_status
+  )
+  VALUES (
+    v_user_id, p_total_amount, 'pending', 'ready_for_pickup', 
+    p_shipping_house_no, p_shipping_street, p_shipping_landmark, p_shipping_area, 
+    p_mobile_number, p_payment_method, 'pending'
+  )
+  RETURNING id INTO v_order_id;
+
+  -- 2. Loop through items to deduct stock
+  FOR item IN SELECT * FROM jsonb_array_elements(p_items)
+  LOOP
+    -- Pessimistic row locking: blocks other checkouts from taking this item's stock simultaneously 
+    SELECT stock INTO v_current_stock FROM products 
+    WHERE id = (item->>'product_id')::UUID FOR UPDATE;
+
+    IF v_current_stock < (item->>'quantity')::INTEGER THEN
+      RAISE EXCEPTION 'Not enough stock for product %', item->>'product_id';
+    END IF;
+
+    UPDATE products 
+    SET stock = stock - (item->>'quantity')::INTEGER
+    WHERE id = (item->>'product_id')::UUID;
+
+    INSERT INTO order_items (order_id, product_id, quantity, price_at_time_of_order)
+    VALUES (v_order_id, (item->>'product_id')::UUID, (item->>'quantity')::INTEGER, (item->>'price')::DECIMAL);
+  END LOOP;
+
+  RETURN v_order_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 
 -- Auto Assign Order to Agent
 CREATE OR REPLACE FUNCTION auto_assign_order_to_agent()
@@ -325,41 +335,29 @@ RETURNS TRIGGER AS $$
 DECLARE
     target_agent_id UUID;
 BEGIN
-    -- Find an approved, active agent in the same area with the fewest total orders
-    SELECT id INTO target_agent_id
-    FROM agents
-    WHERE status = 'approved' 
-      AND is_active = true 
-      AND working_area = NEW.shipping_area
-    ORDER BY total_orders ASC
-    LIMIT 1;
+    IF NEW.delivery_status = 'ready_for_pickup' AND (OLD.delivery_status IS NULL OR OLD.delivery_status != 'ready_for_pickup') THEN
+        SELECT id INTO target_agent_id
+        FROM agents
+        WHERE status = 'approved' 
+          AND is_active = true 
+          AND working_area = NEW.shipping_area
+        ORDER BY total_orders ASC
+        LIMIT 1;
 
-    -- If agent found, assign them
-    IF target_agent_id IS NOT NULL THEN
-        NEW.agent_id := target_agent_id;
-        NEW.delivery_status := 'assigned';
+        IF target_agent_id IS NOT NULL THEN
+            NEW.agent_id := target_agent_id;
+            NEW.delivery_status := 'assigned';
+        END IF;
     END IF;
 
--- Broadcast Model: Function for agents to claim orders
-CREATE OR REPLACE FUNCTION claim_order(p_order_id UUID, p_agent_id UUID)
-RETURNS BOOLEAN AS $$
-BEGIN
-    UPDATE orders
-    SET agent_id = p_agent_id,
-        delivery_status = 'assigned'
-    WHERE id = p_order_id 
-      AND agent_id IS NULL 
-      AND status = 'pending';
-    
-    RETURN FOUND;
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- tr_auto_assign_order is DISABLED for production in favor of Broadcast Model
--- DROP TRIGGER IF EXISTS tr_auto_assign_order ON orders;
--- CREATE TRIGGER tr_auto_assign_order BEFORE INSERT ON orders FOR EACH ROW EXECUTE FUNCTION auto_assign_order_to_agent();
+DROP TRIGGER IF EXISTS tr_auto_assign_order ON orders;
+CREATE TRIGGER tr_auto_assign_order BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION auto_assign_order_to_agent();
 
--- 8. SEEDING (Idempotent)
+-- 9. SEEDING (Idempotent)
 INSERT INTO categories (id, name, slug) VALUES 
 ('f47ac10b-58cc-4372-a567-0e02b2c3d479', 'Fresh Fruits', 'fruits'),
 ('a10b58cc-4372-a567-0e02-b2c3d479f47a', 'Fresh Vegetables', 'vegetables'),
