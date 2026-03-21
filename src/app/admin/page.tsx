@@ -52,7 +52,6 @@ interface Agent {
 
 export default function AdminPortal() {
   const [user, setUser] = useState<User | null>(null);
-  const [profileRole, setProfileRole] = useState<string>('customer');
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,11 +59,6 @@ export default function AdminPortal() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [_team, _setTeam] = useState<{email: string, role: string}[]>([
-    { email: "Admin Group", role: "Owner" }
-  ]);
-  const [_inviteEmail, _setInviteEmail] = useState("");
-
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -94,9 +88,6 @@ export default function AdminPortal() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (!session) {
-        setProfileRole('customer');
-      }
     });
     return () => subscription.unsubscribe();
   }, []);

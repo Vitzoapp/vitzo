@@ -7,7 +7,6 @@ import {
   MapPin, 
   Phone, 
   Star, 
-  CheckCircle2, 
   Truck, 
   ShieldCheck
 } from "lucide-react";
@@ -34,6 +33,7 @@ interface Order {
   shipping_street: string;
   shipping_area: string;
   mobile_number: string;
+  delivery_pin?: string;
   order_items: {
     id: string;
     quantity: number;
@@ -277,7 +277,7 @@ const toggleActive = async () => {
                               if (enteredPin === null) return;
                               
                               // Verify the PIN
-                              if (enteredPin === (order as any).delivery_pin) {
+                              if (enteredPin === order.delivery_pin) {
                                 updateOrderStatus(order.id, 'delivered');
                               } else {
                                 alert("❌ Incorrect PIN. Please ask the customer for the correct 4-digit code.");

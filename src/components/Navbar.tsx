@@ -9,14 +9,7 @@ import { useCart } from "@/context/CartContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useSearch } from "@/context/SearchContext";
-import { searchProducts } from "@/app/actions/search";
 
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  image_url?: string;
-}
 
 interface Agent {
   id: string;
@@ -34,11 +27,8 @@ export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [profileRole, setProfileRole] = useState<string>('customer');
   const [agent, setAgent] = useState<Agent | null>(null);
-  const [_isSearchFocused, _setIsSearchFocused] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
-  const [searchResults, setSearchResults] = useState<Product[]>([]);
-  const [_isSearching, _setIsSearching] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -73,24 +63,7 @@ export default function Navbar() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Server-side search logic with debounce
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      return;
-    }
 
-    const timer = setTimeout(async () => {
-      _setIsSearching(true);
-      const results = await searchProducts(searchQuery);
-      setSearchResults(results as unknown as Product[]);
-      _setIsSearching(false);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  const _filteredProducts = searchResults; // Already filtered by server
 
   const isAdmin = profileRole === 'admin';
 

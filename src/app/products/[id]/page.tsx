@@ -30,7 +30,7 @@ export default function ProductPage() {
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
-      const { data, error: _error } = await supabase
+      const { data } = await supabase
         .from('products')
         .select('*, categories(name, slug)')
         .eq('id', id)

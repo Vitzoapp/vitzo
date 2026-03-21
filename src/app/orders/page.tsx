@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Package, ChevronRight, Clock, CheckCircle2, Truck, AlertCircle } from "lucide-react";
+import { Package, ChevronRight, Clock, CheckCircle2, Truck } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface Order {
@@ -31,7 +31,7 @@ export default function OrdersPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error: _error } = await supabase
+      const { data } = await supabase
         .from('orders')
         .select(`
           *,

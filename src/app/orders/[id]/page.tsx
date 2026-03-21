@@ -292,6 +292,12 @@ export default function OrderTrackingPage() {
                     </button>
                   ))}
                 </div>
+                <textarea 
+                  value={_comment}
+                  onChange={(e) => _setComment(e.target.value)}
+                  placeholder="Share your delivery experience..."
+                  className="w-full h-24 bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium focus:bg-white focus:border-[var(--color-primary-green)] outline-none mb-6 resize-none"
+                />
                 <button 
                   onClick={handleRate}
                   disabled={submittingRating || rating === 0}

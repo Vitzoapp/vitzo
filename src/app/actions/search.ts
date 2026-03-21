@@ -16,12 +16,13 @@ export async function searchProducts(query: string) {
     console.error("Search error:", error);
     return [];
   }
-
   return data.map(p => ({
     id: p.id,
     name: p.name,
     price: p.price,
     image_url: p.image_url,
-    category: (p.categories as any)?.name || 'Uncategorized'
+    category: Array.isArray(p.categories) 
+      ? (p.categories[0] as { name: string } | undefined)?.name || 'Uncategorized'
+      : (p.categories as { name: string } | null)?.name || 'Uncategorized'
   }));
 }
