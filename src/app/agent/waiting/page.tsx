@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 interface Agent {
   id: string;
   full_name: string;
-  area: string;
+  working_area: string;
   status: string;
 }
 
@@ -93,7 +93,7 @@ export default function AgentWaitingPage() {
              </div>
              <div className="p-6 rounded-3xl bg-gray-50 border border-gray-100">
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">Applied Area</span>
-                <p className="font-bold text-slate-900">{agent.area}</p>
+                <p className="font-bold text-slate-900">{agent.working_area}</p>
              </div>
           </div>
 

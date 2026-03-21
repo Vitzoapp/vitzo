@@ -43,7 +43,7 @@ interface Agent {
   full_name: string;
   phone_number: string;
   status: string;
-  area: string;
+  working_area: string;
   salary: number;
   total_orders: number;
   average_rating: number;
@@ -312,7 +312,7 @@ export default function AdminPortal() {
                              <p className="text-xs font-bold text-slate-400">{a.phone_number}</p>
                           </td>
                           <td className="p-8">
-                             <span className="font-black text-xs uppercase tracking-widest">{a.area}</span>
+                             <span className="font-black text-xs uppercase tracking-widest">{a.working_area}</span>
                           </td>
                           <td className="p-8">
                              <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-2 ${

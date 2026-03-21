@@ -22,7 +22,7 @@ interface Agent {
   salary: number;
   total_orders: number;
   average_rating: number;
-  area: string;
+  working_area: string;
 }
 
 interface Order {
@@ -190,7 +190,7 @@ export default function AgentDashboard() {
            </div>
 
            <StatCard icon={Star} label="Rating" value={String(agent.average_rating || '5.0')} color="amber" />
-           <StatCard icon={MapPin} label="Zone" value={agent.area} color="blue" />
+           <StatCard icon={MapPin} label="Zone" value={agent.working_area} color="blue" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
