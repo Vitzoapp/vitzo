@@ -34,7 +34,7 @@ export default function Navbar() {
   const [agent, setAgent] = useState<Agent | null>(null);
   const [_isSearchFocused, _setIsSearchFocused] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [_isMobileSearchOpen, _setIsMobileSearchOpen] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [_isSearching, _setIsSearching] = useState(false);
 
@@ -70,11 +70,13 @@ export default function Navbar() {
 
   const isAdmin = user?.email === "vitzo.hq@gmail.com";
 
-  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && searchQuery.trim()) {
+  const handleSearch = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (searchQuery.trim()) {
       if (pathname !== '/products') {
         router.push('/products');
       }
+      setIsMobileSearchOpen(false);
     }
   };
 
@@ -134,24 +136,23 @@ export default function Navbar() {
           </nav>
         </div>
 
-        {/* Search Bar - Simplified for now to save space */}
+        {/* Search Bar - Desktop */}
         <div className="hidden flex-1 max-w-xs mx-4 lg:mx-8 md:flex">
-          <div className="relative w-full">
+          <form onSubmit={handleSearch} className="relative w-full">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
-              type="text"
+              type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleSearchKeyPress}
-              placeholder="Search..."
+              placeholder="Search products..."
               className="h-11 w-full rounded-2xl bg-gray-50 pl-11 pr-4 text-xs font-bold outline-none border border-gray-100 focus:border-[var(--color-primary-green)] transition-all"
             />
-          </div>
+          </form>
         </div>
 
         <div className="flex items-center gap-3">
           <button 
-            onClick={() => _setIsMobileSearchOpen(true)}
+            onClick={() => setIsMobileSearchOpen(true)}
             className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-50 text-slate-600 md:hidden"
           >
             <Search className="h-5 w-5" />
@@ -200,6 +201,31 @@ export default function Navbar() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Search Overlay */}
+      {isMobileSearchOpen && (
+        <div className="fixed inset-0 z-[60] bg-white p-4 md:hidden animate-in slide-in-from-top duration-300">
+          <div className="flex items-center gap-4 mb-4">
+            <form onSubmit={handleSearch} className="flex-1 relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                autoFocus
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search products..."
+                className="h-12 w-full rounded-2xl bg-gray-50 pl-11 pr-4 text-sm font-bold outline-none border border-gray-100 focus:border-[var(--color-primary-green)]"
+              />
+            </form>
+            <button 
+              onClick={() => setIsMobileSearchOpen(false)}
+              className="h-12 px-4 font-black uppercase tracking-widest text-xs text-slate-400 italic"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Menu */}
       {isMenuOpen && (

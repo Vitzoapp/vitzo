@@ -48,6 +48,7 @@ export default function OrderTrackingPage() {
   const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorStatus, setErrorStatus] = useState<number | null>(null);
 
   const [rating, setRating] = useState(0);
   const [_comment, _setComment] = useState("");
@@ -56,7 +57,9 @@ export default function OrderTrackingPage() {
 
   useEffect(() => {
     const fetchOrder = async () => {
-      const { data, error: _error } = await supabase
+      if (!id) return;
+      
+      const { data, error } = await supabase
         .from('orders')
         .select(`
           *,
@@ -69,25 +72,29 @@ export default function OrderTrackingPage() {
         .eq('id', id)
         .single();
 
-      if (data) setOrder(data);
+      if (error) {
+        console.error("Order Fetch Error:", error);
+        setErrorStatus(error.code === 'PGRST116' ? 404 : 403);
+      } else {
+        setOrder(data);
+      }
       setLoading(false);
     };
 
-    if (id) {
-      fetchOrder();
-      const subscription = supabase
-        .channel(`order-${id}`)
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${id}` }, 
-        (payload) => {
-          setOrder(prev => prev ? { ...prev, ...payload.new as unknown as Order } : null);
-        })
-        .subscribe();
+    fetchOrder();
 
-      return () => {
-        supabase.removeChannel(subscription);
-      };
-    }
-  }, [id]);
+    const subscription = supabase
+      .channel(`order-${id}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${id}` }, 
+      (payload) => {
+        setOrder(prev => prev ? { ...prev, ...payload.new as unknown as Order } : null);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [id, router]);
 
   useEffect(() => {
     const checkRating = async () => {
@@ -123,21 +130,28 @@ export default function OrderTrackingPage() {
   if (loading) return <div className="min-h-screen bg-white"><div className="p-20 animate-pulse bg-gray-50 h-screen" /></div>;
   if (!order) return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center text-center px-4">
-      <div className="h-24 w-24 rounded-[32px] bg-red-50 flex items-center justify-center text-red-500 mb-8">
+      <div className={`h-24 w-24 rounded-[32px] flex items-center justify-center mb-8 ${errorStatus === 403 ? 'bg-amber-50 text-amber-500' : 'bg-red-50 text-red-500'}`}>
         <Package className="h-12 w-12" />
       </div>
       <h2 className="font-outfit text-4xl font-black text-slate-950 uppercase tracking-tighter italic mb-4">
-        Order <span className="text-red-500">Not Found</span>
+        {errorStatus === 403 ? "Access" : "Order"} <span className={errorStatus === 403 ? "text-amber-500" : "text-red-500"}>{errorStatus === 403 ? "Denied" : "Not Found"}</span>
       </h2>
       <p className="text-slate-500 font-medium max-w-sm mb-8 leading-relaxed">
-        We couldn&apos;t find an order with this ID. It might be incorrect or you may not have permission to view it.
+        {errorStatus === 403 
+          ? "You don't have permission to view this order. Please ensure you are logged into the correct account." 
+          : "We couldn't find an order with this ID. It might be incorrect or has been removed."}
       </p>
-      <button 
-        onClick={() => router.push('/orders')}
-        className="h-14 px-8 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest italic text-sm hover:bg-[var(--color-primary-green)] transition-all shadow-xl"
-      >
-        View All Orders
-      </button>
+      <div className="flex flex-col gap-4">
+        <button 
+          onClick={() => router.push('/orders')}
+          className="h-14 px-8 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest italic text-sm hover:bg-[var(--color-primary-green)] transition-all shadow-xl"
+        >
+          View My Orders
+        </button>
+        {errorStatus === 403 && (
+          <p className="text-[10px] font-black uppercase text-slate-300 tracking-[0.2em] italic">Code: ERR_ACCESS_RESTRICTED</p>
+        )}
+      </div>
     </div>
   );
 
