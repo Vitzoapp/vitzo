@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import Image from "next/image";
 import { ShoppingCart, Plus, Minus } from "lucide-react";
 import { useCart } from "@/context/CartContext";
@@ -49,7 +50,7 @@ export default function ProductCard({
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-[32px] border border-gray-100 bg-white transition-all duration-500 hover:shadow-[0_20px_50px_rgba(6,78,59,0.1)] hover:-translate-y-1">
       {/* Image Container */}
-      <div className="relative aspect-square overflow-hidden bg-gray-50/50">
+      <Link href={`/products/${id}`} className="relative aspect-square overflow-hidden bg-gray-50/50">
         <Image
           src={image}
           alt={name}
@@ -68,19 +69,24 @@ export default function ProductCard({
         {/* Quick Add Overlay (Mobile Friendly) */}
         {quantity === 0 && (
           <button 
-            onClick={handleAdd}
-            className="absolute bottom-4 right-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-primary-green)] text-white shadow-xl opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 active:scale-95 lg:flex hidden"
+            onClick={(e) => {
+              e.preventDefault();
+              handleAdd();
+            }}
+            className="absolute bottom-4 right-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-primary-green)] text-white shadow-xl opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 active:scale-95 lg:flex hidden z-10"
           >
             <Plus className="h-6 w-6" />
           </button>
         )}
-      </div>
+      </Link>
 
       {/* Content */}
       <div className="flex flex-col p-6">
-        <h3 className="font-outfit text-xl font-bold text-slate-900 group-hover:text-[var(--color-primary-green)] transition-colors line-clamp-1">
-          {name}
-        </h3>
+        <Link href={`/products/${id}`}>
+          <h3 className="font-outfit text-xl font-bold text-slate-900 group-hover:text-[var(--color-primary-green)] transition-colors line-clamp-1">
+            {name}
+          </h3>
+        </Link>
         <p className="mt-1 text-xs font-black text-slate-600 uppercase tracking-widest italic">V-Fresh Premium</p>
 
         <div className="mt-6 flex items-center justify-between">
