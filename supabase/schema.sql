@@ -145,6 +145,13 @@ CREATE POLICY "Users view their own orders" ON orders FOR SELECT TO authenticate
 DROP POLICY IF EXISTS "Users insert their own orders" ON orders;
 CREATE POLICY "Users insert their own orders" ON orders FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
 
+-- Agents: Update assigned orders
+DROP POLICY IF EXISTS "Agents update assigned orders" ON orders;
+CREATE POLICY "Agents update assigned orders" ON orders 
+FOR UPDATE TO authenticated 
+USING (agent_id IN (SELECT id FROM agents WHERE user_id = auth.uid())) 
+WITH CHECK (agent_id IN (SELECT id FROM agents WHERE user_id = auth.uid()));
+
 -- Order Items: Users view and insert
 DROP POLICY IF EXISTS "Users view their own order items" ON order_items;
 CREATE POLICY "Users view their own order items" ON order_items FOR SELECT TO authenticated USING (

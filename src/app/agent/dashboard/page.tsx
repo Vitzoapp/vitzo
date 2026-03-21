@@ -136,14 +136,19 @@ const toggleActive = async () => {
   };
 
   const updateOrderStatus = async (orderId: string, status: string) => {
-    const { error: _error } = await supabase
+    const { error } = await supabase
       .from('orders')
       .update({ delivery_status: status })
       .eq('id', orderId);
 
-    if (!_error) {
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, delivery_status: status } : o));
+    if (error) {
+      console.error("Failed to update order:", error.message);
+      alert("Could not update order status. Please check your connection and try again.");
+      return;
     }
+    
+    // Only update local UI state if database update was successful
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, delivery_status: status } : o));
   };
 
   if (loading || !agent) return <div className="min-h-screen bg-white"><div className="p-20 animate-pulse bg-gray-50 h-screen" /></div>;
@@ -177,14 +182,14 @@ const toggleActive = async () => {
                     >
                       <div className="flex items-center gap-3">
                         <div className={`h-2.5 w-2.5 rounded-full transition-all ${agent.is_active ? 'bg-white animate-pulse shadow-[0_0_10px_white]' : 'bg-red-500'}`} />
-                        <span className="italic">{agent.is_active ? 'Online & Ready' : 'System Offline'}</span>
+                        <span className="italic">{agent.is_active ? 'Duty: ON' : 'Duty: OFF'}</span>
                       </div>
                       <div className={`h-8 w-14 rounded-full bg-black/20 relative transition-all ${agent.is_active ? 'bg-black/10' : ''}`}>
                         <div className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-all shadow-md ${agent.is_active ? 'translate-x-7' : 'translate-x-1'}`} />
                       </div>
                     </button>
                     <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest italic text-center">
-                      {agent.is_active ? 'You are receiving new delivery assignments' : 'Go online to start receiving orders'}
+                      {agent.is_active ? 'Searching for nearby orders...' : 'You are offline. Toggle duty status to receive pings.'}
                     </p>
                  </div>
                </div>
@@ -221,8 +226,8 @@ const toggleActive = async () => {
             {pendingOrders.length === 0 ? (
               <div className="bg-white rounded-[40px] p-16 text-center border-2 border-dashed border-gray-200">
                 <Truck className="h-16 w-16 text-slate-200 mx-auto mb-4" />
-                <h3 className="text-xl font-black text-slate-400 uppercase italic">No pending deliveries</h3>
-                <p className="text-xs font-bold text-slate-400 mt-2">Go online to receive automatic assignments</p>
+                <h3 className="text-xl font-black text-slate-400 uppercase italic">No active assignments.</h3>
+                <p className="text-xs font-bold text-slate-400 mt-2">Stay online to receive new delivery pings.</p>
               </div>
             ) : (
               <div className="space-y-6">
@@ -259,15 +264,28 @@ const toggleActive = async () => {
                             onClick={() => updateOrderStatus(order.id, 'out_for_delivery')}
                             className="w-full h-14 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest italic text-xs shadow-lg hover:bg-[var(--color-primary-green)] transition-all"
                           >
-                            Mark Out for Delivery
+                            Start Delivery
                           </button>
                         )}
                         {order.delivery_status === 'out_for_delivery' && (
                           <button 
-                            onClick={() => updateOrderStatus(order.id, 'delivered')}
-                            className="w-full h-14 bg-[var(--color-primary-green)] text-white rounded-2xl font-black uppercase tracking-widest italic text-xs shadow-lg hover:bg-green-600 transition-all"
+                            onClick={() => {
+                              // Prompt the agent for the PIN
+                              const enteredPin = window.prompt("Enter the 4-digit Delivery PIN from the customer:");
+                              
+                              // If the user clicks Cancel, exit early
+                              if (enteredPin === null) return;
+                              
+                              // Verify the PIN
+                              if (enteredPin === (order as any).delivery_pin) {
+                                updateOrderStatus(order.id, 'delivered');
+                              } else {
+                                alert("❌ Incorrect PIN. Please ask the customer for the correct 4-digit code.");
+                              }
+                            }}
+                            className="w-full h-14 bg-[var(--color-primary-green)] text-white rounded-[20px] font-black uppercase tracking-widest italic text-sm shadow-lg hover:bg-green-600 transition-all active:scale-95"
                           >
-                            Confirm Delivered
+                            Complete Delivery
                           </button>
                         )}
                         <span className="text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Status: {order.delivery_status}</span>

@@ -71,7 +71,7 @@ export default function CartPage() {
       .insert({
         user_id: user?.id,
         status: 'pending',
-        total_amount: totalPrice * 1.05,
+        total_amount: totalPrice,
         shipping_house_no: profile?.house_no,
         shipping_street: profile?.street,
         shipping_landmark: profile?.landmark,
@@ -100,6 +100,10 @@ export default function CartPage() {
     const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
 
     if (itemsError) {
+      console.error("Error saving order items, rolling back order:", itemsError);
+      // Rollback: delete the order if items failed
+      await supabase.from("orders").delete().eq("id", order.id);
+      
       alert("Error saving order items: " + itemsError.message);
       setLoading(false);
       return;
@@ -116,13 +120,13 @@ export default function CartPage() {
         <div className="bg-emerald-50 p-8 rounded-[40px] mb-8">
           <ShoppingBag className="h-24 w-24 text-[var(--color-primary-green)]" />
         </div>
-        <h1 className="text-4xl font-black text-slate-900 mb-4 italic uppercase">Your Cart is Empty</h1>
-        <p className="text-slate-400 font-bold mb-8">Looks like you haven&apos;t added any groceries yet.</p>
+        <h1 className="text-4xl font-black text-slate-900 mb-4 italic uppercase">Your cart is waiting.</h1>
+        <p className="text-slate-400 font-bold mb-8">Fresh groceries, daily essentials, and more—delivered to your door in minutes.</p>
         <Link 
           href="/"
           className="bg-slate-900 text-white px-10 py-4 rounded-3xl font-black uppercase tracking-widest hover:scale-105 transition-transform"
         >
-          Start Shopping
+          Browse Fresh Picks
         </Link>
       </div>
     );
@@ -233,7 +237,7 @@ export default function CartPage() {
                         )}
                         <h3 className="font-black text-slate-900 mb-3 italic uppercase flex items-center gap-2">
                           Delivery Details
-                          {isAreaAllowed && <span className="text-[10px] bg-[var(--color-primary-green)] text-white px-2 py-0.5 rounded-full not-italic tracking-widest ml-2">Verified Area</span>}
+                          {isAreaAllowed && <span className="text-[10px] bg-[var(--color-primary-green)] text-white px-2 py-0.5 rounded-full not-italic tracking-widest ml-2">Deliverable Zone</span>}
                         </h3>
                         <div className="space-y-1">
                           <p className="text-slate-900 font-black">{profile.house_no}</p>
@@ -244,13 +248,13 @@ export default function CartPage() {
                         
                         {!isAreaAllowed && (
                           <div className="mt-6 p-4 rounded-2xl bg-white border border-red-100">
-                             <p className="text-sm font-black text-red-500 italic">Sorry, we only deliver to {ALLOWED_AREAS.join(", ")} at the moment.</p>
+                             <p className="text-sm font-black text-red-500 italic">We&apos;re expanding rapidly! 🚀 Currently, we only service specific zones. Stay tuned as we bring Vitzo to your neighborhood soon.</p>
                           </div>
                         )}
                       </div>
                     ) : (
                       <div className="p-10 border-2 border-dashed border-slate-200 rounded-[32px] text-center">
-                        <p className="text-slate-400 font-bold mb-6">You haven&apos;t set a delivery address yet.</p>
+                        <p className="text-slate-400 font-bold mb-6">Where should we deliver your fresh groceries?</p>
                         <Link href="/profile" className="inline-flex bg-slate-900 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:scale-105 transition-transform">
                           Setup Profile & Address
                         </Link>
@@ -284,8 +288,8 @@ export default function CartPage() {
                              <ShoppingBag className="h-8 w-8" />
                           </div>
                           <div>
-                            <h3 className="font-black text-slate-900 italic uppercase italic">Cash on Delivery</h3>
-                            <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-1">Pay when you receive</p>
+                            <h3 className="font-black text-slate-900 italic uppercase">Pay on Delivery</h3>
+                            <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-1">Pay via Cash or UPI at your doorstep</p>
                           </div>
                        </div>
                        {paymentMethod === "cod" && <CheckCircle2 className="h-6 w-6 text-[var(--color-primary-green)]" />}
@@ -300,8 +304,8 @@ export default function CartPage() {
                              <Zap className="h-8 w-8" />
                           </div>
                           <div>
-                            <h3 className="font-black text-slate-900 italic uppercase">Mock UPI Payment</h3>
-                            <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-1">Instant confirmation</p>
+                            <h3 className="font-black text-slate-900 italic uppercase">UPI (GPay, PhonePe, Paytm)</h3>
+                            <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-1">Fast & Secure via UPI</p>
                           </div>
                        </div>
                        {paymentMethod === "upi" && <CheckCircle2 className="h-6 w-6 text-[var(--color-primary-green)]" />}
@@ -315,7 +319,7 @@ export default function CartPage() {
                       className="bg-slate-900 text-white px-12 py-5 rounded-3xl font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-slate-900/20 disabled:opacity-50 flex items-center gap-3"
                     >
                       {loading && <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                      Place Order (₹{(totalPrice * 1.05).toLocaleString()})
+                      Proceed to Pay (₹{totalPrice.toLocaleString()})
                     </button>
                  </div>
               </div>
@@ -327,11 +331,11 @@ export default function CartPage() {
                     <CheckCircle2 className="h-16 w-16 text-[var(--color-primary-green)]" />
                     <div className="absolute -inset-4 bg-[var(--color-primary-green)]/10 rounded-[50px] -z-10 animate-pulse" />
                  </div>
-                 <h2 className="text-5xl font-black text-slate-900 mb-4 italic uppercase tracking-tighter">Fresh Success!</h2>
-                 <p className="text-slate-400 font-bold mb-16 max-w-sm mx-auto leading-relaxed">Your order has been received. We&apos;ll be at your doorstep during the evening batch today.</p>
+                 <h2 className="text-5xl font-black text-slate-900 mb-4 italic uppercase tracking-tighter">Order Confirmed! 🎉</h2>
+                 <p className="text-slate-400 font-bold mb-16 max-w-sm mx-auto leading-relaxed">Your fresh groceries are being packed with care. We&apos;ll deliver them to your doorstep today during our evening run.</p>
                  <div className="flex flex-col gap-4 max-w-xs mx-auto">
                     <Link href="/" className="bg-[var(--color-primary-green)] text-white px-10 py-6 rounded-3xl font-black uppercase tracking-widest hover:scale-105 transition-all shadow-2xl shadow-emerald-200">Keep Shopping</Link>
-                    <Link href="/orders" className="font-black text-slate-400 hover:text-slate-900 uppercase tracking-widest text-xs py-4">View My Orders</Link>
+                    <Link href="/orders" className="font-black text-slate-400 hover:text-slate-900 uppercase tracking-widest text-xs py-4">Track Order Status</Link>
                  </div>
               </div>
             )}
@@ -351,16 +355,12 @@ export default function CartPage() {
                     <span className="text-xs uppercase tracking-widest">Delivery</span>
                     <span className="text-[var(--color-primary-green)] font-black italic">FREE</span>
                   </div>
-                  <div className="flex justify-between text-slate-400 font-bold">
-                    <span className="text-xs uppercase tracking-widest">Handling Fee</span>
-                    <span className="italic">₹{(totalPrice * 0.05).toLocaleString()}</span>
-                  </div>
                 </div>
                 <div className="h-[1px] bg-white/10 mb-10" />
                 <div className="flex justify-between items-end mb-12">
                    <div>
                       <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 italic">Total Amount</p>
-                      <p className="text-4xl font-black italic tracking-tighter text-white">₹{(totalPrice * 1.05).toLocaleString()}</p>
+                      <p className="text-4xl font-black italic tracking-tighter text-white">₹{totalPrice.toLocaleString()}</p>
                    </div>
                 </div>
                 {step === 1 && (
