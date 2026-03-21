@@ -32,7 +32,7 @@ export default function OrdersPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
+      const { data, error: _error } = await supabase
         .from('orders')
         .select(`
           *,

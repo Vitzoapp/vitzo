@@ -14,7 +14,7 @@ interface Product {
   price: number;
   image_url: string;
   description?: string;
-  specifications?: any;
+  specifications?: Record<string, string | number | boolean>;
   category_id?: string;
   categories?: { name: string; slug: string };
 }
@@ -26,12 +26,12 @@ export default function ProductPage() {
   const router = useRouter();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const { cart, addToCart, updateQuantity, removeFromCart } = useCart();
+  const { cart, addToCart, updateQuantity } = useCart();
 
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error: _error } = await supabase
         .from('products')
         .select('*, categories(name, slug)')
         .eq('id', id)
@@ -109,7 +109,7 @@ export default function ProductPage() {
               fill
               className="object-cover transition-transform duration-700 group-hover:scale-105"
             />
-          </Link>
+          </div>
           {/* Content */}
           <div className="flex flex-col">
             <div className="flex items-center gap-2 mb-4">

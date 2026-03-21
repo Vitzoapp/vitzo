@@ -59,10 +59,13 @@ export default function AdminPortal() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [team, setTeam] = useState<{email: string, role: string}[]>([
+  const [_team, _setTeam] = useState<{email: string, role: string}[]>([
     { email: "vitzo.hq@gmail.com", role: "Owner" }
   ]);
-  const [inviteEmail, setInviteEmail] = useState("");
+  const [_inviteEmail, _setInviteEmail] = useState("");
+
+  const [uploading, setUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -106,9 +109,6 @@ export default function AdminPortal() {
     const { error } = await supabase.from('agents').update({ salary }).eq('id', id);
     if (!error) fetchData();
   };
-
-  const [uploading, setUploading] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -360,7 +360,61 @@ export default function AdminPortal() {
            </>
         )}
 
-        {/* Categories/Team content remains similar but truncated for length... */}
+        {/* Modal for adding/editing products */}
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+            <div className="bg-white rounded-[40px] w-full max-w-2xl p-10 relative overflow-hidden">
+               <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 p-2 hover:bg-gray-100 rounded-full transition-all"><X className="h-6 w-6 text-slate-400" /></button>
+               <h3 className="text-3xl font-black text-slate-900 uppercase italic tracking-tighter mb-8">{editingProduct ? "Modify Product" : "New Registration"}</h3>
+               
+               <form onSubmit={handleAddEditProduct} className="space-y-6">
+                 <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Product Name</label>
+                       <input name="name" required defaultValue={editingProduct?.name} className="w-full h-14 bg-gray-50 border-2 border-gray-50 rounded-2xl px-4 font-bold focus:bg-white focus:border-[var(--color-primary-green)] outline-none" />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Price (INR)</label>
+                       <input name="price" type="number" step="0.01" required defaultValue={editingProduct?.price} className="w-full h-14 bg-gray-50 border-2 border-gray-50 rounded-2xl px-4 font-bold focus:bg-white focus:border-[var(--color-primary-green)] outline-none" />
+                    </div>
+                 </div>
+
+                 <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Category</label>
+                       <select name="category_id" required defaultValue={editingProduct?.category_id} className="w-full h-14 bg-gray-50 border-2 border-gray-50 rounded-2xl px-4 font-bold focus:bg-white focus:border-[var(--color-primary-green)] outline-none">
+                          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                       </select>
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Stock Units</label>
+                       <input name="stock" type="number" required defaultValue={editingProduct?.stock} className="w-full h-14 bg-gray-50 border-2 border-gray-50 rounded-2xl px-4 font-bold focus:bg-white focus:border-[var(--color-primary-green)] outline-none" />
+                    </div>
+                 </div>
+
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Product Image</label>
+                    <div className="flex gap-4">
+                       <div className="h-32 w-32 border-2 border-dashed border-gray-200 rounded-3xl overflow-hidden relative group">
+                          {imagePreview || editingProduct?.image_url ? (
+                            <Image src={imagePreview || editingProduct!.image_url} alt="Preview" fill className="object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-300"><Plus className="h-8 w-8" /></div>
+                          )}
+                          <input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
+                       </div>
+                       <div className="flex-1 flex flex-col justify-center">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase leading-relaxed">Drop high-res asset or click to upload. <br/> Supported: JPG, PNG, WEBP.</p>
+                          {uploading && <div className="mt-2 text-[10px] font-black text-[var(--color-primary-green)] animate-pulse uppercase">Syncing to Cloud...</div>}
+                       </div>
+                    </div>
+                 </div>
+
+                 <button type="submit" className="w-full h-16 bg-slate-900 text-white rounded-3xl font-black uppercase tracking-widest italic shadow-xl hover:bg-[var(--color-primary-green)] transition-all">Execute Registration</button>
+               </form>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

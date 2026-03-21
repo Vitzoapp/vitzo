@@ -12,9 +12,7 @@ import {
   CheckCircle2, 
   Truck, 
   Clock, 
-  ShieldCheck,
-  User,
-  ExternalLink
+  User
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import Navbar from "@/components/Navbar";
@@ -53,13 +51,13 @@ export default function OrderTrackingPage() {
   const [loading, setLoading] = useState(true);
 
   const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
+  const [_comment, _setComment] = useState("");
   const [hasRated, setHasRated] = useState(false);
   const [submittingRating, setSubmittingRating] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
-      const { data, error } = await supabase
+      const { data, error: _error } = await supabase
         .from('orders')
         .select(`
           *,
@@ -82,7 +80,7 @@ export default function OrderTrackingPage() {
         .channel(`order-${id}`)
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${id}` }, 
         (payload) => {
-          setOrder(prev => prev ? { ...prev, ...payload.new } : null);
+          setOrder(prev => prev ? { ...prev, ...payload.new as unknown as Order } : null);
         })
         .subscribe();
 
@@ -116,7 +114,7 @@ export default function OrderTrackingPage() {
         agent_id: order?.agent_id,
         user_id: (await supabase.auth.getUser()).data.user?.id,
         rating,
-        comment
+        comment: _comment
       }]);
 
     if (!error) setHasRated(true);

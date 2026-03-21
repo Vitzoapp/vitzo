@@ -1,8 +1,7 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { useRef } from "react";
+import ProductCard from "./ProductCard";
 
 interface Product {
   id: string;

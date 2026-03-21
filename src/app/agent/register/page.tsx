@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { User, Phone, MapPin, Send, ShieldCheck, Clock, CheckCircle2 } from "lucide-react";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import Navbar from "@/components/Navbar";
 
@@ -10,7 +11,7 @@ export default function AgentRegisterPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   
   const [formData, setFormData] = useState({
     full_name: "",
@@ -52,7 +53,7 @@ export default function AgentRegisterPage() {
       .from('agents')
       .insert([
         { 
-          user_id: user.id,
+          user_id: user?.id,
           full_name: formData.full_name,
           phone_number: formData.phone_number,
           area: formData.area,
@@ -159,7 +160,7 @@ export default function AgentRegisterPage() {
                     )}
                   </button>
                   <p className="text-center text-[10px] font-medium text-slate-400 mt-4 px-8">
-                    By submitting, you agree to Vitzo's Agent Terms of Service and Privacy Policy.
+                    By submitting, you agree to Vitzo&apos;s Agent Terms of Service and Privacy Policy.
                   </p>
                 </div>
               </form>
@@ -171,7 +172,7 @@ export default function AgentRegisterPage() {
   );
 }
 
-function FeatureItem({ icon: Icon, title, desc }: { icon: any, title: string, desc: string }) {
+function FeatureItem({ icon: Icon, title, desc }: { icon: React.ElementType, title: string, desc: string }) {
   return (
     <div className="flex gap-4 p-4 rounded-3xl bg-white border border-gray-100 shadow-sm">
       <div className="h-12 w-12 rounded-2xl bg-[var(--color-primary-green)]/10 flex items-center justify-center text-[var(--color-primary-green)]">

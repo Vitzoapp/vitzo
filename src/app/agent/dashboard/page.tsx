@@ -9,16 +9,22 @@ import {
   Star, 
   CheckCircle2, 
   Truck, 
-  Clock, 
-  DollarSign, 
-  LogOut,
-  Navigation,
-  ExternalLink,
-  ShieldCheck,
-  ToggleLeft as ToggleIcon
+  ShieldCheck
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import Navbar from "@/components/Navbar";
+
+interface Agent {
+  id: string;
+  user_id: string;
+  full_name: string;
+  status: string;
+  is_active: boolean;
+  salary: number;
+  total_orders: number;
+  average_rating: number;
+  area: string;
+}
 
 interface Order {
   id: string;
@@ -40,7 +46,7 @@ interface Order {
 
 export default function AgentDashboard() {
   const router = useRouter();
-  const [agent, setAgent] = useState<any>(null);
+  const [agent, setAgent] = useState<Agent | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -79,26 +85,28 @@ export default function AgentDashboard() {
         .eq('agent_id', agentData.id)
         .order('created_at', { ascending: false });
 
-      if (ordersData) setOrders(ordersData);
+      if (ordersData) setOrders(ordersData as unknown as Order[]);
       setLoading(false);
     };
 
     fetchAgentData();
 
-    // Subscribe to new orders (simulating auto-assignment logic in a real app)
+    if (!agent?.id) return;
+
+    // Subscribe to new orders
     const subscription = supabase
       .channel('agent-orders')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, 
       (payload) => {
-        if (payload.new.agent_id === agent?.id) {
+        if (payload.new.agent_id === agent.id) {
           setOrders(prev => {
             const index = prev.findIndex(o => o.id === payload.new.id);
             if (index > -1) {
               const newOrders = [...prev];
-              newOrders[index] = { ...newOrders[index], ...payload.new };
+              newOrders[index] = { ...newOrders[index], ...payload.new as unknown as Order };
               return newOrders;
             }
-            return [payload.new as Order, ...prev];
+            return [payload.new as unknown as Order, ...prev];
           });
         }
       })
@@ -110,8 +118,9 @@ export default function AgentDashboard() {
   }, [router, agent?.id]);
 
   const toggleActive = async () => {
+    if (!agent) return;
     setIsUpdating(true);
-    const { data, error } = await supabase
+    const { data, error: _error } = await supabase
       .from('agents')
       .update({ is_active: !agent.is_active })
       .eq('id', agent.id)
@@ -123,17 +132,17 @@ export default function AgentDashboard() {
   };
 
   const updateOrderStatus = async (orderId: string, status: string) => {
-    const { error } = await supabase
+    const { error: _error } = await supabase
       .from('orders')
       .update({ delivery_status: status })
       .eq('id', orderId);
 
-    if (!error) {
+    if (!_error) {
       setOrders(prev => prev.map(o => o.id === orderId ? { ...o, delivery_status: status } : o));
     }
   };
 
-  if (loading) return <div className="min-h-screen bg-white"><Navbar /><div className="p-20 animate-pulse bg-gray-50 h-screen" /></div>;
+  if (loading || !agent) return <div className="min-h-screen bg-white"><Navbar /><div className="p-20 animate-pulse bg-gray-50 h-screen" /></div>;
 
   const pendingOrders = orders.filter(o => o.delivery_status !== 'delivered');
   const deliveredOrders = orders.filter(o => o.delivery_status === 'delivered');
@@ -182,7 +191,7 @@ export default function AgentDashboard() {
              </div>
            </div>
 
-           <StatCard icon={Star} label="Rating" value={agent.average_rating || '5.0'} color="amber" />
+           <StatCard icon={Star} label="Rating" value={String(agent.average_rating || '5.0')} color="amber" />
            <StatCard icon={MapPin} label="Zone" value={agent.area} color="blue" />
         </div>
 
@@ -283,15 +292,15 @@ export default function AgentDashboard() {
   );
 }
 
-function StatCard({ icon: Icon, label, value, color }: { icon: any, label: string, value: string, color: string }) {
-  const colors: any = {
+function StatCard({ icon: Icon, label, value, color }: { icon: React.ElementType, label: string, value: string, color: string }) {
+  const colors: Record<string, string> = {
     amber: "bg-amber-50 text-amber-600 border-amber-100",
     blue: "bg-blue-50 text-blue-600 border-blue-100",
     green: "bg-green-50 text-green-600 border-green-100"
   };
 
   return (
-    <div className={`rounded-[40px] p-8 border ${colors[color]} flex flex-col justify-between`}>
+    <div className={`rounded-[40px] p-8 border ${colors[color] || colors.blue} flex flex-col justify-between`}>
       <Icon className="h-8 w-8 mb-4" />
       <div>
         <span className="text-[10px] font-black uppercase tracking-widest opacity-60 block mb-1">{label}</span>

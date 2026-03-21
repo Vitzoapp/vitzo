@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart, User as UserIcon, Search, Menu, Package, Settings, X, Clock } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
@@ -17,15 +16,24 @@ interface Product {
   image_url?: string;
 }
 
+interface Agent {
+  id: string;
+  user_id: string;
+  status: string;
+  is_active: boolean;
+  full_name?: string;
+}
+
 export default function Navbar() {
   const { totalItems } = useCart();
   const { searchQuery, setSearchQuery } = useSearch();
   const [user, setUser] = useState<User | null>(null);
-  const [agent, setAgent] = useState<any>(null);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [agent, setAgent] = useState<Agent | null>(null);
+  const [_isSearchFocused, _setIsSearchFocused] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [_isMobileSearchOpen, _setIsMobileSearchOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [_isSearching, _setIsSearching] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -46,14 +54,14 @@ export default function Navbar() {
 
     const fetchProducts = async () => {
       const { data } = await supabase.from('products').select('*');
-      if (data) setProducts(data);
+      if (data) setSearchResults(data);
     };
     fetchProducts();
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const filteredProducts = products.filter(p => 
+  const _filteredProducts = searchResults.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
   ).slice(0, 5);
 
@@ -131,7 +139,7 @@ export default function Navbar() {
 
         <div className="flex items-center gap-3">
           <button 
-            onClick={() => setIsMobileSearchOpen(true)}
+            onClick={() => _setIsMobileSearchOpen(true)}
             className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gray-50 text-slate-600 md:hidden"
           >
             <Search className="h-5 w-5" />

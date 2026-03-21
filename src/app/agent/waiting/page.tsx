@@ -2,13 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, ShieldCheck, Phone, CheckCircle2, XCircle } from "lucide-react";
+import { Clock, XCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import Navbar from "@/components/Navbar";
 
+interface Agent {
+  id: string;
+  full_name: string;
+  area: string;
+  status: string;
+}
+
 export default function AgentWaitingPage() {
   const router = useRouter();
-  const [agent, setAgent] = useState<any>(null);
+  const [agent, setAgent] = useState<Agent | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,7 +53,7 @@ export default function AgentWaitingPage() {
     return () => clearInterval(interval);
   }, [router]);
 
-  if (loading) return <div className="min-h-screen bg-white"><Navbar /><div className="p-20 animate-pulse bg-gray-50 h-screen" /></div>;
+  if (loading || !agent) return <div className="min-h-screen bg-white"><Navbar /><div className="p-20 animate-pulse bg-gray-50 h-screen" /></div>;
 
   const isTerminated = agent.status === 'terminated';
 
