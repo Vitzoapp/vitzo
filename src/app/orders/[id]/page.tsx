@@ -95,6 +95,7 @@ export default function OrderTrackingPage() {
   const [hasRated, setHasRated] = useState(false);
   const [submittingRating, setSubmittingRating] = useState(false);
   const [ratingError, setRatingError] = useState<string | null>(null);
+  const [ratingMessage, setRatingMessage] = useState<string | null>(null);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
 
@@ -225,17 +226,17 @@ export default function OrderTrackingPage() {
 
   useEffect(() => {
     const checkRating = async () => {
-      if (!order?.id || order.delivery_status !== "delivered") {
-        return;
-      }
+    if (!order?.id || order.delivery_status !== "delivered") {
+      return;
+    }
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("agent_ratings")
         .select("id")
         .eq("order_id", order.id)
         .single();
 
-      if (data) {
+      if (data && !error) {
         setHasRated(true);
       }
     };
@@ -245,11 +246,19 @@ export default function OrderTrackingPage() {
 
   const handleRate = async () => {
     if (!order || rating === 0 || !order.agent_id) {
+      setRatingError("This delivery is not ready for rating yet.");
       return;
     }
 
     setSubmittingRating(true);
     setRatingError(null);
+    setRatingMessage(null);
+
+    if (order.delivery_status !== "delivered") {
+      setRatingError("You can rate the delivery after the order is marked delivered.");
+      setSubmittingRating(false);
+      return;
+    }
 
     const {
       data: { user },
@@ -261,22 +270,30 @@ export default function OrderTrackingPage() {
       return;
     }
 
-    const { error } = await supabase.from("agent_ratings").insert([
+    const { error } = await supabase.from("agent_ratings").upsert(
       {
         order_id: order.id,
         agent_id: order.agent_id,
         user_id: user.id,
         rating,
       },
-    ]);
+      {
+        onConflict: "order_id",
+      },
+    );
 
     if (error) {
-      setRatingError(error.message);
+      setRatingError(
+        error.message === "new row violates row-level security policy"
+          ? "Only the customer who placed this order can submit a delivery rating."
+          : error.message,
+      );
       setSubmittingRating(false);
       return;
     }
 
     setHasRated(true);
+    setRatingMessage("Thanks. Your delivery rating has been saved.");
     setSubmittingRating(false);
   };
 
@@ -586,6 +603,11 @@ export default function OrderTrackingPage() {
                     {ratingError && (
                       <div className="mt-4 rounded-[1.5rem] border border-[var(--line-soft)] bg-[rgba(242,106,46,0.08)] px-4 py-3 text-sm text-[var(--forest-950)]">
                         {ratingError}
+                      </div>
+                    )}
+                    {ratingMessage && (
+                      <div className="mt-4 rounded-[1.5rem] border border-[var(--line-soft)] bg-[rgba(125,207,89,0.14)] px-4 py-3 text-sm text-[var(--forest-950)]">
+                        {ratingMessage}
                       </div>
                     )}
                     <div className="mt-5 flex justify-center gap-2">

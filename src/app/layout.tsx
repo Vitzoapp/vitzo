@@ -19,26 +19,57 @@ const body = Sora({
   subsets: ["latin"],
 });
 
+const siteUrl = "https://vitzo.com";
+const defaultOgImage =
+  "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1600&q=80";
+
 export const metadata: Metadata = {
-  title: "Vitzo | Fresh groceries batched for your block",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Vitzo | Fresh groceries batched for your block",
+    template: "%s | Vitzo",
+  },
   description:
     "Vitzo brings fresh groceries, pantry staples, and daily essentials together in calmer neighborhood delivery batches.",
   keywords: ["Vitzo", "grocery delivery", "fresh produce", "batch delivery"],
   authors: [{ name: "Vitzo" }],
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "Vitzo | Fresh groceries batched for your block",
     description:
       "Shop fresh produce and daily essentials with quieter, smarter neighborhood delivery runs.",
-    url: "https://vitzo.com",
+    url: siteUrl,
     siteName: "Vitzo",
     locale: "en_IN",
     type: "website",
+    images: [
+      {
+        url: defaultOgImage,
+        width: 1600,
+        height: 900,
+        alt: "Vitzo grocery delivery storefront",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Vitzo | Fresh groceries batched for your block",
     description:
       "Fresh produce and neighborhood delivery rhythms designed to feel lighter, cleaner, and more local.",
+    images: [defaultOgImage],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
   },
 };
 

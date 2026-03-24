@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowRight, Gift, ShieldCheck } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
 
@@ -88,4 +89,50 @@ export default async function InvitePage({
       </section>
     </div>
   );
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ code: string }>;
+}): Promise<Metadata> {
+  const { code } = await params;
+  const referralCode = normalizeReferralCode(code);
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("get_referrer_preview", {
+    p_referral_code: referralCode,
+  });
+
+  const invite = data?.[0] ?? null;
+  const referrerName = invite?.first_name || "a Vitzo member";
+
+  return {
+    title: `You're invited by ${referrerName}`,
+    description:
+      "Join Vitzo through a personal invite, save your delivery details once, and start shopping the current grocery batch.",
+    alternates: {
+      canonical: `/invite/${referralCode}`,
+    },
+    openGraph: {
+      title: `You've been invited by ${referrerName}`,
+      description:
+        "Open this Vitzo invite to join the live grocery batch without typing a referral code.",
+      url: `/invite/${referralCode}`,
+      images: [
+        {
+          url: inviteImage,
+          width: 1600,
+          height: 900,
+          alt: `Vitzo invite from ${referrerName}`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `You've been invited by ${referrerName}`,
+      description:
+        "Join Vitzo through a personal invite and start shopping the current grocery batch.",
+      images: [inviteImage],
+    },
+  };
 }

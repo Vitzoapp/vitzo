@@ -1,15 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowRight } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import LiveBatchCounter from "@/components/LiveBatchCounter";
+import { getCategoryVisual } from "@/lib/categoryVisuals";
 import { createClient } from "@/utils/supabase/server";
-
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-}
 
 interface Product {
   id: string;
@@ -30,6 +26,36 @@ interface BatchSnapshot {
 const heroImage =
   "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1600&q=80";
 
+export const metadata: Metadata = {
+  title: "Vitzo Grocery Delivery in Kozhikode",
+  description:
+    "Order vegetables, fruits, pantry staples, and daily groceries from Vitzo with live batch timing, fast local drops, and weight-based ordering.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Vitzo Grocery Delivery in Kozhikode",
+    description:
+      "Shop the live grocery batch, see closing countdowns, and build your basket with weight-based ordering on Vitzo.",
+    url: "/",
+    images: [
+      {
+        url: heroImage,
+        width: 1600,
+        height: 900,
+        alt: "Vitzo live grocery batch homepage",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Vitzo Grocery Delivery in Kozhikode",
+    description:
+      "Live grocery batches, fresh daily essentials, and weight-based ordering from Vitzo.",
+    images: [heroImage],
+  },
+};
+
 export default async function Home() {
   const supabase = await createClient();
 
@@ -39,7 +65,7 @@ export default async function Home() {
     supabase.rpc("get_current_batch_snapshot"),
   ]);
 
-  const categories = (catRes.data || []) as Category[];
+  const categories = catRes.data || [];
   const products = (prodRes.data || []) as Product[];
   const batchSnapshot = (batchRes.data?.[0] ?? null) as BatchSnapshot | null;
 
@@ -85,28 +111,10 @@ export default async function Home() {
                   Browse aisles
                 </Link>
               </div>
-              <div className="animate-reveal animation-delay-450 mt-8">
-                <LiveBatchCounter initialSnapshot={batchSnapshot} />
-              </div>
             </div>
 
-            <div className="hidden max-w-sm self-center lg:block">
-              <div className="rounded-[2.4rem] border border-white/14 bg-white/10 p-5 text-white/86 backdrop-blur">
-                <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-white/58">
-                  Fast category jump
-                </p>
-                <div className="mt-5 flex flex-wrap gap-3">
-                  {categories.slice(0, 6).map((category) => (
-                    <Link
-                      key={category.id}
-                      href={`/categories/${category.slug}`}
-                      className="inline-flex min-h-11 items-center rounded-full border border-white/18 px-4 text-sm font-semibold text-white transition-colors duration-300 hover:bg-white/12"
-                    >
-                      {category.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
+            <div className="hidden max-w-[24rem] self-center lg:block">
+              <LiveBatchCounter initialSnapshot={batchSnapshot} />
             </div>
           </div>
         </div>
@@ -114,16 +122,33 @@ export default async function Home() {
 
       <section className="border-t border-[var(--line-soft)] bg-[linear-gradient(180deg,rgba(255,248,236,0.98)_0%,rgba(255,252,245,0.92)_100%)]">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex gap-3 overflow-x-auto pb-2">
-            {categories.map((category) => (
-              <Link
-                key={category.id}
-                href={`/categories/${category.slug}`}
-                className="inline-flex min-h-11 shrink-0 items-center rounded-full border border-[var(--line-soft)] bg-white px-4 text-sm font-semibold text-[var(--forest-950)]"
-              >
-                {category.name}
-              </Link>
-            ))}
+          <div className="no-scrollbar -mx-4 overflow-x-auto px-4 pb-2">
+            <div className="flex snap-x snap-mandatory gap-3">
+              {categories.map((category) => {
+                const { icon: Icon, tintClass } = getCategoryVisual(
+                  category.slug,
+                  category.name,
+                );
+
+                return (
+                  <Link
+                    key={category.id}
+                    href={`/categories/${category.slug}`}
+                    className="group min-w-[10.5rem] snap-start rounded-[1.9rem] border border-[var(--line-soft)] bg-white px-4 py-4 shadow-[0_16px_32px_rgba(24,49,40,0.05)] transition-transform duration-300 hover:-translate-y-1"
+                  >
+                    <div className={`inline-flex h-11 w-11 items-center justify-center rounded-full ${tintClass}`}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <p className="mt-4 text-sm font-semibold tracking-[-0.02em] text-[var(--forest-950)]">
+                      {category.name}
+                    </p>
+                    <p className="mt-1 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-[var(--accent-deep)]">
+                      View aisle
+                    </p>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>

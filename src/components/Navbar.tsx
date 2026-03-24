@@ -38,8 +38,17 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [showCartToast, setShowCartToast] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [bagPulse, setBagPulse] = useState(false);
 
   useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 12);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
     const fetchAgent = async (userId: string) => {
       const { data } = await supabase
         .from("agents")
@@ -85,7 +94,10 @@ export default function Navbar() {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, []);
 
   useEffect(() => {
@@ -94,8 +106,13 @@ export default function Navbar() {
     }
 
     setShowCartToast(true);
+    setBagPulse(true);
     const timeoutId = window.setTimeout(() => setShowCartToast(false), 2200);
-    return () => window.clearTimeout(timeoutId);
+    const pulseTimeoutId = window.setTimeout(() => setBagPulse(false), 700);
+    return () => {
+      window.clearTimeout(timeoutId);
+      window.clearTimeout(pulseTimeoutId);
+    };
   }, [lastAddedItem]);
 
   const isAdmin = profileRole === "admin";
@@ -123,7 +140,13 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--line-soft)] bg-[rgba(255,246,234,0.82)] backdrop-blur-xl">
+    <header
+      className={`sticky top-0 z-50 border-b backdrop-blur-xl transition-all duration-300 ${
+        isScrolled
+          ? "border-[rgba(24,49,40,0.08)] bg-[rgba(255,246,234,0.96)] shadow-[0_16px_40px_rgba(24,49,40,0.08)]"
+          : "border-[var(--line-soft)] bg-[rgba(255,246,234,0.82)]"
+      }`}
+    >
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-8">
           <Link href="/" className="flex items-center gap-3 text-[var(--forest-950)]">
@@ -217,9 +240,11 @@ export default function Navbar() {
 
           <Link
             href="/cart"
-            className="relative inline-flex h-11 min-w-11 items-center justify-center gap-2 rounded-full bg-[var(--accent-deep)] px-4 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(242,106,46,0.22)]"
+            className={`relative inline-flex h-11 min-w-11 items-center justify-center gap-2 rounded-full bg-[var(--accent-deep)] px-4 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(242,106,46,0.22)] transition-transform duration-300 ${
+              bagPulse ? "scale-110 -translate-y-0.5" : ""
+            }`}
           >
-            <ShoppingBag className="h-4.5 w-4.5" />
+            <ShoppingBag className={`h-4.5 w-4.5 transition-transform duration-300 ${bagPulse ? "rotate-[-8deg]" : ""}`} />
             <span className="hidden sm:inline">Bag</span>
             {totalItems > 0 && (
               <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[0.68rem] font-semibold text-[var(--forest-950)]">

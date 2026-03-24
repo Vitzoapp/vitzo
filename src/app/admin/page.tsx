@@ -37,6 +37,7 @@ interface Product {
 interface Category {
   id: string;
   name: string;
+  slug: string;
 }
 
 interface Agent {
@@ -73,6 +74,7 @@ export default function AdminPortal() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -85,6 +87,7 @@ export default function AdminPortal() {
   const [draftRealPrice, setDraftRealPrice] = useState(0);
   const [draftCommission, setDraftCommission] = useState(0);
   const [assignmentDrafts, setAssignmentDrafts] = useState<Record<string, string>>({});
+  const [categoryNameDraft, setCategoryNameDraft] = useState("");
 
   useEffect(() => {
     let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -299,6 +302,35 @@ export default function AdminPortal() {
     }
   };
 
+  const handleCreateCategory = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmedName = categoryNameDraft.trim();
+
+    if (!trimmedName) {
+      setAdminError("Category name is required.");
+      return;
+    }
+
+    const slug = trimmedName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+    const { error } = await supabase.from("categories").insert({
+      name: trimmedName,
+      slug,
+    });
+
+    if (error) {
+      setAdminError(error.message);
+      return;
+    }
+
+    setCategoryNameDraft("");
+    setIsCategoryModalOpen(false);
+    fetchData();
+  };
+
   if (loading && !user) return <div className="p-20 text-center font-black animate-pulse text-[var(--color-primary-green)]">SECURE VERIFICATION...</div>;
 
   if (!user) {
@@ -382,7 +414,12 @@ export default function AdminPortal() {
                   <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Inventory Flux</h2>
                   <p className="text-slate-400 font-bold">Manage real-time grocery synchronization.</p>
                </div>
-               <button onClick={() => { setEditingProduct(null); setDraftRealPrice(0); setDraftCommission(0); setIsModalOpen(true); }} className="bg-slate-900 text-white px-8 py-4 rounded-3xl font-black uppercase text-sm italic shadow-xl hover:scale-105 active:scale-95 transition-all">Register Product</button>
+               <div className="flex items-center gap-3">
+                  <button onClick={() => setIsCategoryModalOpen(true)} className="border border-slate-200 bg-white px-6 py-4 rounded-3xl font-black uppercase text-sm italic text-slate-900 shadow-sm hover:-translate-y-0.5 transition-all">
+                    New Category
+                  </button>
+                  <button onClick={() => { setEditingProduct(null); setDraftRealPrice(0); setDraftCommission(0); setIsModalOpen(true); }} className="bg-slate-900 text-white px-8 py-4 rounded-3xl font-black uppercase text-sm italic shadow-xl hover:scale-105 active:scale-95 transition-all">Register Product</button>
+               </div>
             </header>
 
             <div className="bg-white rounded-[40px] shadow-2xl shadow-slate-200 border border-gray-100 overflow-hidden">
@@ -497,6 +534,35 @@ export default function AdminPortal() {
         )}
 
         {/* Modal for adding/editing products */}
+        {isCategoryModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+            <div className="bg-white rounded-[40px] w-full max-w-xl p-10 relative overflow-hidden">
+               <button onClick={() => setIsCategoryModalOpen(false)} className="absolute top-8 right-8 p-2 hover:bg-gray-100 rounded-full transition-all"><X className="h-6 w-6 text-slate-400" /></button>
+               <h3 className="text-3xl font-black text-slate-900 uppercase italic tracking-tighter">Create Category</h3>
+               <p className="mt-3 text-sm font-bold text-slate-400">
+                 Add a new aisle so products can be organized immediately in the storefront and admin inventory flow.
+               </p>
+
+               <form onSubmit={handleCreateCategory} className="mt-8 space-y-6">
+                  <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Category Name</label>
+                     <input
+                       value={categoryNameDraft}
+                       onChange={(event) => setCategoryNameDraft(event.target.value)}
+                       className="w-full h-14 bg-gray-50 border-2 border-gray-50 rounded-2xl px-4 font-bold focus:bg-white focus:border-[var(--color-primary-green)] outline-none"
+                       placeholder="Fresh Herbs"
+                       required
+                     />
+                  </div>
+
+                  <button type="submit" className="w-full h-14 bg-slate-900 text-white rounded-3xl font-black uppercase tracking-widest italic shadow-xl">
+                    Create Category
+                  </button>
+               </form>
+            </div>
+          </div>
+        )}
+
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
             <div className="bg-white rounded-[40px] w-full max-w-2xl p-10 relative overflow-hidden">
