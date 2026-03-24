@@ -5,7 +5,8 @@ import { ArrowRight } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import LiveBatchCounter from "@/components/LiveBatchCounter";
 import { getCategoryVisual } from "@/lib/categoryVisuals";
-import type { WeightUnit } from "@/lib/pricing";
+import type { ProductUnitType, WeightUnit } from "@/lib/pricing";
+import { normalizeAllowedUnitsForProduct, normalizeProductUnitType } from "@/lib/pricing";
 import { createClient } from "@/utils/supabase/server";
 
 interface Product {
@@ -16,6 +17,7 @@ interface Product {
   category_id: string | null;
   category_name: string | null;
   category_slug: string | null;
+  unit_type: ProductUnitType | null;
   allowed_units: WeightUnit[] | null;
 }
 
@@ -70,7 +72,11 @@ export default async function Home() {
   ]);
 
   const categories = catRes.data || [];
-  const products = (prodRes.data || []) as Product[];
+  const products = ((prodRes.data || []) as Product[]).map((product) => ({
+    ...product,
+    unit_type: normalizeProductUnitType(product.unit_type),
+    allowed_units: normalizeAllowedUnitsForProduct(product.allowed_units, product.unit_type),
+  }));
   const batchSnapshot = (batchRes.data?.[0] ?? null) as BatchSnapshot | null;
 
   return (
@@ -186,7 +192,7 @@ export default async function Home() {
               price={product.price}
               image_url={product.image_url ?? heroImage}
               category={product.category_name || "Fresh pick"}
-              allowedUnits={product.allowed_units ?? ["g", "kg"]}
+              allowedUnits={normalizeAllowedUnitsForProduct(product.allowed_units, product.unit_type)}
             />
           ))}
         </div>

@@ -3,8 +3,8 @@
 import { useDeferredValue, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useSearch } from "@/context/SearchContext";
-import type { Json } from "@/lib/database.types";
-import type { WeightUnit } from "@/lib/pricing";
+import type { ProductUnitType, WeightUnit } from "@/lib/pricing";
+import { normalizeAllowedUnitsForProduct, normalizeProductUnitType } from "@/lib/pricing";
 import ProductCard from "./ProductCard";
 
 interface Product {
@@ -15,6 +15,7 @@ interface Product {
   category_id?: string | null;
   category_name: string | null;
   category_slug: string | null;
+  unit_type?: ProductUnitType | null;
   allowed_units?: WeightUnit[] | null;
 }
 
@@ -46,7 +47,8 @@ export default function ProductGrid({
         if (data) {
           setProducts(data.map((product) => ({
             ...product,
-            allowed_units: normalizeAllowedUnits(product.allowed_units),
+            unit_type: normalizeProductUnitType(product.unit_type),
+            allowed_units: normalizeAllowedUnitsForProduct(product.allowed_units, product.unit_type),
           })));
         }
         setLoading(false);
@@ -101,26 +103,9 @@ export default function ProductGrid({
             "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=800"
           }
           category={product.category_name || "Uncategorized"}
-          allowedUnits={product.allowed_units ?? ["g", "kg"]}
+          allowedUnits={normalizeAllowedUnitsForProduct(product.allowed_units, product.unit_type)}
         />
       ))}
     </div>
   );
-}
-
-function normalizeAllowedUnits(value: Json | null | undefined): WeightUnit[] {
-  if (!Array.isArray(value)) {
-    return ["g", "kg"];
-  }
-
-  const units = value.filter((item): item is WeightUnit =>
-    item === "g" ||
-    item === "kg" ||
-    item === "ml" ||
-    item === "l" ||
-    item === "pack" ||
-    item === "piece",
-  );
-
-  return units.length > 0 ? units : ["g", "kg"];
 }

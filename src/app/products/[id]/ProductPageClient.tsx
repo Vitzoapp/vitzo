@@ -7,8 +7,12 @@ import { ArrowLeft, ShieldCheck, Truck } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { Json } from "@/lib/database.types";
 import WeightSelector from "@/components/WeightSelector";
-import type { WeightUnit } from "@/lib/pricing";
-import { getUnitPriceLabel } from "@/lib/pricing";
+import type { ProductUnitType, WeightUnit } from "@/lib/pricing";
+import {
+  getUnitPriceLabel,
+  normalizeAllowedUnitsForProduct,
+  normalizeProductUnitType,
+} from "@/lib/pricing";
 
 interface Product {
   id: string;
@@ -21,6 +25,7 @@ interface Product {
   category_id?: string | null;
   category_name: string | null;
   category_slug: string | null;
+  unit_type?: ProductUnitType | null;
   allowed_units?: WeightUnit[] | null;
 }
 
@@ -63,7 +68,8 @@ export default function ProductPageClient({ id }: { id: string }) {
       if (data) {
         setProduct({
           ...data,
-          allowed_units: normalizeAllowedUnits(data.allowed_units),
+          unit_type: normalizeProductUnitType(data.unit_type),
+          allowed_units: normalizeAllowedUnitsForProduct(data.allowed_units, data.unit_type),
         });
       }
       setLoading(false);
@@ -109,7 +115,7 @@ export default function ProductPageClient({ id }: { id: string }) {
   }
 
   const image = product.image_url || FALLBACK_IMAGE;
-  const allowedUnits = product.allowed_units ?? ["g", "kg"];
+  const allowedUnits = normalizeAllowedUnitsForProduct(product.allowed_units, product.unit_type);
 
   return (
     <div className="min-h-[calc(100svh-5rem)] bg-[var(--background)]">
@@ -206,21 +212,4 @@ export default function ProductPageClient({ id }: { id: string }) {
       </main>
     </div>
   );
-}
-
-function normalizeAllowedUnits(value: Json | null | undefined): WeightUnit[] {
-  if (!Array.isArray(value)) {
-    return ["g", "kg"];
-  }
-
-  const units = value.filter((item): item is WeightUnit =>
-    item === "g" ||
-    item === "kg" ||
-    item === "ml" ||
-    item === "l" ||
-    item === "pack" ||
-    item === "piece",
-  );
-
-  return units.length > 0 ? units : ["g", "kg"];
 }
