@@ -4,7 +4,7 @@ import { X, Plus, Minus, ShoppingBag } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { formatWeightLabel } from "@/lib/pricing";
+import { formatSelectionLabel } from "@/lib/pricing";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -19,22 +19,19 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
   return (
     <div className="fixed inset-0 z-[100] overflow-hidden">
-      {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
-      {/* Drawer */}
       <div className="absolute inset-y-0 right-0 flex max-w-full pl-10">
         <div className="w-screen max-w-md transform transition-transform duration-500 ease-in-out">
           <div className="flex h-full flex-col bg-white shadow-2xl">
-            {/* Header */}
             <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
               <h2 className="font-outfit text-xl font-bold text-slate-900">
                 Shopping Cart ({totalItems})
               </h2>
-              <button 
+              <button
                 onClick={onClose}
                 className="rounded-full p-2 text-slate-400 hover:bg-gray-100 hover:text-slate-600 transition-colors"
               >
@@ -42,7 +39,6 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               </button>
             </div>
 
-            {/* Cart Items */}
             <div className="flex-1 overflow-y-auto px-6 py-4">
               {cart.length === 0 ? (
                 <div className="flex h-full flex-col items-center justify-center space-y-4">
@@ -50,7 +46,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     <ShoppingBag className="h-12 w-12 text-slate-300" />
                   </div>
                   <p className="text-slate-500">Your cart is empty</p>
-                  <button 
+                  <button
                     onClick={onClose}
                     className="font-black uppercase text-xs tracking-widest text-[var(--color-secondary-green)] hover:underline"
                   >
@@ -72,28 +68,28 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                       <div className="flex flex-1 flex-col">
                         <div className="flex justify-between">
                           <h4 className="font-bold text-slate-900">{item.name}</h4>
-                          <p className="font-bold text-slate-900">₹{item.unitPrice.toLocaleString("en-IN")}</p>
+                          <p className="font-bold text-slate-900">â‚¹{item.unitPrice.toLocaleString("en-IN")}</p>
                         </div>
                         <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                          {formatWeightLabel(item.weightInGrams)}
+                          {formatSelectionLabel(item.selectedWeightValue, item.selectedUnit)}
                         </p>
                         <div className="mt-auto flex items-center justify-between">
                           <div className="flex items-center gap-3 rounded-full border border-gray-100 bg-gray-50 px-3 py-1">
-                            <button 
+                            <button
                               onClick={() => updateQuantity(item.id, item.quantity - 1)}
                               className="text-slate-400 hover:text-slate-600"
                             >
                               <Minus className="h-4 w-4" />
                             </button>
                             <span className="text-sm font-bold text-slate-900">{item.quantity}</span>
-                            <button 
+                            <button
                               onClick={() => updateQuantity(item.id, item.quantity + 1)}
                               className="text-slate-400 hover:text-slate-600"
                             >
                               <Plus className="h-4 w-4" />
                             </button>
                           </div>
-                          <button 
+                          <button
                             onClick={() => removeFromCart(item.id)}
                             className="text-sm font-medium text-red-500 hover:text-red-600"
                           >
@@ -107,12 +103,11 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               )}
             </div>
 
-            {/* Footer */}
             {cart.length > 0 && (
               <div className="border-t border-gray-100 bg-gray-50 px-6 py-6">
                 <div className="flex justify-between text-base font-bold text-slate-900">
                   <span>Subtotal</span>
-                  <span>₹{totalPrice.toLocaleString("en-IN")}</span>
+                  <span>â‚¹{totalPrice.toLocaleString("en-IN")}</span>
                 </div>
                 <p className="mt-1 text-sm text-slate-500">
                   Shipping and taxes calculated at checkout.

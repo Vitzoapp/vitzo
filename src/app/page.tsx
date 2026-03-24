@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import LiveBatchCounter from "@/components/LiveBatchCounter";
 import { getCategoryVisual } from "@/lib/categoryVisuals";
+import type { WeightUnit } from "@/lib/pricing";
 import { createClient } from "@/utils/supabase/server";
 
 interface Product {
@@ -15,6 +16,7 @@ interface Product {
   category_id: string | null;
   category_name: string | null;
   category_slug: string | null;
+  allowed_units: WeightUnit[] | null;
 }
 
 interface BatchSnapshot {
@@ -182,6 +184,7 @@ export default async function Home() {
               price={product.price}
               image_url={product.image_url ?? heroImage}
               category={product.category_name || "Fresh pick"}
+              allowedUnits={product.allowed_units ?? ["g", "kg"]}
             />
           ))}
         </div>

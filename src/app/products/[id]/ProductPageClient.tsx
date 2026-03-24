@@ -7,6 +7,8 @@ import { ArrowLeft, ShieldCheck, Truck } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { Json } from "@/lib/database.types";
 import WeightSelector from "@/components/WeightSelector";
+import type { WeightUnit } from "@/lib/pricing";
+import { getUnitPriceLabel } from "@/lib/pricing";
 
 interface Product {
   id: string;
@@ -19,6 +21,7 @@ interface Product {
   category_id?: string | null;
   category_name: string | null;
   category_slug: string | null;
+  allowed_units?: WeightUnit[] | null;
 }
 
 const FALLBACK_IMAGE =
@@ -58,7 +61,10 @@ export default function ProductPageClient({ id }: { id: string }) {
         .single();
 
       if (data) {
-        setProduct(data);
+        setProduct({
+          ...data,
+          allowed_units: normalizeAllowedUnits(data.allowed_units),
+        });
       }
       setLoading(false);
     };
@@ -103,6 +109,7 @@ export default function ProductPageClient({ id }: { id: string }) {
   }
 
   const image = product.image_url || FALLBACK_IMAGE;
+  const allowedUnits = product.allowed_units ?? ["g", "kg"];
 
   return (
     <div className="min-h-[calc(100svh-5rem)] bg-[var(--background)]">
@@ -134,7 +141,7 @@ export default function ProductPageClient({ id }: { id: string }) {
               {product.name}
             </h1>
             <p className="mt-4 text-2xl font-semibold text-[var(--forest-950)] sm:text-3xl">
-              {currencyFormatter.format(product.price)} / kg
+              {currencyFormatter.format(product.price)} {getUnitPriceLabel(allowedUnits[0] ?? "g")}
             </p>
             <p className="mt-6 max-w-xl text-sm leading-7 text-[var(--forest-700)] sm:text-base">
               {product.description ||
@@ -165,6 +172,7 @@ export default function ProductPageClient({ id }: { id: string }) {
                 category={product.category_name || "Fresh pick"}
                 image={image}
                 pricePerKg={product.price}
+                allowedUnits={allowedUnits}
               />
             </div>
 
@@ -198,4 +206,21 @@ export default function ProductPageClient({ id }: { id: string }) {
       </main>
     </div>
   );
+}
+
+function normalizeAllowedUnits(value: Json | null | undefined): WeightUnit[] {
+  if (!Array.isArray(value)) {
+    return ["g", "kg"];
+  }
+
+  const units = value.filter((item): item is WeightUnit =>
+    item === "g" ||
+    item === "kg" ||
+    item === "ml" ||
+    item === "l" ||
+    item === "pack" ||
+    item === "piece",
+  );
+
+  return units.length > 0 ? units : ["g", "kg"];
 }

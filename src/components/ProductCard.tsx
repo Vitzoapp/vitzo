@@ -3,6 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import WeightSelector from "@/components/WeightSelector";
+import type { WeightUnit } from "@/lib/pricing";
+import { getUnitPriceLabel } from "@/lib/pricing";
 
 interface ProductCardProps {
   id: string;
@@ -11,6 +13,7 @@ interface ProductCardProps {
   image_url?: string;
   image?: string;
   category: string;
+  allowedUnits?: WeightUnit[];
 }
 
 const FALLBACK_IMAGE =
@@ -29,8 +32,10 @@ export default function ProductCard({
   image_url,
   image: propImage,
   category,
+  allowedUnits = ["g", "kg"],
 }: ProductCardProps) {
   const image = image_url || propImage || FALLBACK_IMAGE;
+  const unitLabel = getUnitPriceLabel(allowedUnits[0] ?? "g");
 
   return (
     <article className="group">
@@ -56,7 +61,7 @@ export default function ProductCard({
           </h3>
         </Link>
         <p className="mt-3 text-sm font-semibold text-[var(--forest-950)]">
-          {currencyFormatter.format(price)} / kg
+          {currencyFormatter.format(price)} {unitLabel}
         </p>
       </div>
 
@@ -68,6 +73,7 @@ export default function ProductCard({
           category={category}
           image={image}
           pricePerKg={price}
+          allowedUnits={allowedUnits}
         />
       </div>
     </article>

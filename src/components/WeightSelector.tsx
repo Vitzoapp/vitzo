@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Minus, Plus, ShoppingBag } from "lucide-react";
 import type { WeightUnit } from "@/lib/pricing";
 import {
   buildCartLineId,
   calculateWeightedPrice,
-  formatWeightLabel,
+  formatSelectionLabel,
   weightToGrams,
 } from "@/lib/pricing";
 import { useCart } from "@/context/CartContext";
@@ -14,6 +14,10 @@ import { useCart } from "@/context/CartContext";
 const PRESET_WEIGHTS = {
   g: [250, 500, 750],
   kg: [1, 2, 3],
+  ml: [250, 500, 750],
+  l: [1, 2, 3],
+  pack: [1, 2, 3],
+  piece: [1, 2, 3],
 } as const;
 
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
@@ -28,6 +32,7 @@ interface WeightSelectorProps {
   category: string;
   image: string;
   pricePerKg: number;
+  allowedUnits?: WeightUnit[];
   compact?: boolean;
 }
 
@@ -37,17 +42,33 @@ export default function WeightSelector({
   category,
   image,
   pricePerKg,
+  allowedUnits = ["g", "kg"],
   compact = false,
 }: WeightSelectorProps) {
   const { cart, addToCart, updateQuantity, removeFromCart } = useCart();
-  const [unit, setUnit] = useState<WeightUnit>("g");
-  const [weightValue, setWeightValue] = useState(500);
+  const [unit, setUnit] = useState<WeightUnit>(allowedUnits[0] ?? "g");
+  const [weightValue, setWeightValue] = useState<number>(getDefaultValueForUnit(allowedUnits[0] ?? "g"));
+
+  const selectableUnits: WeightUnit[] = allowedUnits.length > 0 ? allowedUnits : ["g", "kg"];
+  const unitSignature = allowedUnits.join("|");
+
+  useEffect(() => {
+    const nextSelectableUnits: WeightUnit[] = allowedUnits.length > 0 ? allowedUnits : ["g", "kg"];
+    const nextUnit = nextSelectableUnits[0] ?? "g";
+    setUnit(nextUnit);
+    setWeightValue(getDefaultValueForUnit(nextUnit));
+  }, [productId, unitSignature, allowedUnits]);
 
   const weightInGrams = weightToGrams(weightValue, unit);
   const lineId = buildCartLineId(productId, weightInGrams);
   const cartItem = cart.find((item) => item.id === lineId);
   const quantity = cartItem?.quantity ?? 0;
   const linePrice = calculateWeightedPrice(pricePerKg, weightInGrams);
+
+  const setUnitSelection = (nextUnit: WeightUnit) => {
+    setUnit(nextUnit);
+    setWeightValue(getDefaultValueForUnit(nextUnit));
+  };
 
   const addCurrentWeight = () => {
     addToCart({
@@ -89,14 +110,11 @@ export default function WeightSelector({
       }`}
     >
       <div className="flex gap-2">
-        {(["g", "kg"] as WeightUnit[]).map((nextUnit) => (
+        {selectableUnits.map((nextUnit) => (
           <button
             key={nextUnit}
             type="button"
-            onClick={() => {
-              setUnit(nextUnit);
-              setWeightValue(nextUnit === "g" ? 500 : 1);
-            }}
+            onClick={() => setUnitSelection(nextUnit)}
             className={`inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold uppercase tracking-[0.18em] transition ${
               unit === nextUnit
                 ? "bg-[var(--forest-950)] text-white"
@@ -133,19 +151,19 @@ export default function WeightSelector({
           </span>
           <input
             type="number"
-            min={unit === "kg" ? 0.1 : 50}
-            step={unit === "kg" ? 0.1 : 50}
+            min={getMinValueForUnit(unit)}
+            step={getStepForUnit(unit)}
             value={weightValue}
             onChange={(event) =>
               setWeightValue(
-                Math.max(Number(event.target.value) || 0, unit === "kg" ? 0.1 : 50),
+                Math.max(Number(event.target.value) || 0, getMinValueForUnit(unit)),
               )
             }
             className="mt-2 h-12 w-full rounded-full border border-[var(--line-soft)] bg-white px-4 text-sm text-[var(--forest-950)] outline-none focus:border-[var(--accent-deep)]"
           />
         </label>
         <div className="rounded-[1.4rem] bg-[var(--surface-soft)] px-4 py-3 text-sm font-semibold text-[var(--forest-950)]">
-          {currencyFormatter.format(linePrice)} for {formatWeightLabel(weightInGrams)}
+          {currencyFormatter.format(linePrice)} for {formatSelectionLabel(weightValue, unit)}
         </div>
       </div>
 
@@ -159,7 +177,7 @@ export default function WeightSelector({
             <Minus className="h-4 w-4" />
           </button>
           <span className="text-sm font-semibold text-[var(--forest-950)]">
-            {quantity} x {formatWeightLabel(weightInGrams)}
+            {quantity} x {formatSelectionLabel(weightValue, unit)}
           </span>
           <button
             type="button"
@@ -176,9 +194,37 @@ export default function WeightSelector({
           className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[var(--accent-deep)] px-5 text-sm font-semibold text-white"
         >
           <ShoppingBag className="h-4 w-4" />
-          Add {formatWeightLabel(weightInGrams)}
+          Add {formatSelectionLabel(weightValue, unit)}
         </button>
       )}
     </div>
   );
+}
+
+function getDefaultValueForUnit(unit: WeightUnit) {
+  return PRESET_WEIGHTS[unit][1] ?? PRESET_WEIGHTS[unit][0] ?? 1;
+}
+
+function getMinValueForUnit(unit: WeightUnit) {
+  if (unit === "kg" || unit === "l") {
+    return 0.1;
+  }
+
+  if (unit === "g" || unit === "ml") {
+    return 50;
+  }
+
+  return 1;
+}
+
+function getStepForUnit(unit: WeightUnit) {
+  if (unit === "kg" || unit === "l") {
+    return 0.1;
+  }
+
+  if (unit === "g" || unit === "ml") {
+    return 50;
+  }
+
+  return 1;
 }

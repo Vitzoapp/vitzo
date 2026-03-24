@@ -408,6 +408,7 @@ export interface Database {
       };
       products: {
         Row: {
+          allowed_units: Json;
           category_id: string | null;
           commission: number;
           created_at: string | null;
@@ -418,8 +419,10 @@ export interface Database {
           name: string;
           real_price: number;
           specifications: Json | null;
+          unit_type: string;
         };
         Insert: {
+          allowed_units?: Json;
           category_id?: string | null;
           commission?: number;
           created_at?: string | null;
@@ -430,8 +433,10 @@ export interface Database {
           name: string;
           real_price: number;
           specifications?: Json | null;
+          unit_type?: string;
         };
         Update: {
+          allowed_units?: Json;
           category_id?: string | null;
           commission?: number;
           created_at?: string | null;
@@ -442,6 +447,7 @@ export interface Database {
           name?: string;
           real_price?: number;
           specifications?: Json | null;
+          unit_type?: string;
         };
         Relationships: [
           {
@@ -511,6 +517,7 @@ export interface Database {
     Views: {
       product_catalog: {
         Row: {
+          allowed_units: Json | null;
           category_id: string | null;
           category_name: string | null;
           category_slug: string | null;
@@ -522,6 +529,7 @@ export interface Database {
           name: string;
           price: number;
           specifications: Json | null;
+          unit_type: string | null;
         };
         Relationships: [];
       };

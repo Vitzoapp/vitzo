@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { supabase } from "@/lib/supabase";
-import { formatWeightLabel } from "@/lib/pricing";
+import { formatSelectionLabel } from "@/lib/pricing";
 
 interface Profile {
   id: string;
@@ -255,7 +255,7 @@ export default function CartPage() {
                           {item.name}
                         </h3>
                         <p className="mt-2 text-sm text-[var(--forest-700)]">
-                          {currencyFormatter.format(item.unitPrice)} for {formatWeightLabel(item.weightInGrams)}
+                          {currencyFormatter.format(item.unitPrice)} for {formatSelectionLabel(item.selectedWeightValue, item.selectedUnit)}
                         </p>
                       </div>
                       <div className="flex items-center justify-between gap-4 md:block md:text-right">
@@ -324,7 +324,7 @@ export default function CartPage() {
                             Near {profile.landmark}
                           </p>
                           <p className="mt-3 text-sm text-[var(--forest-700)]">
-                            {profile.area} • {profile.mobile_number}
+                            {profile.area} â€¢ {profile.mobile_number}
                           </p>
                         </div>
                         {isAreaAllowed ? (

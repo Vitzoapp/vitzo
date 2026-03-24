@@ -29,6 +29,8 @@ interface Product {
   real_price: number;
   commission: number;
   final_price: number;
+  unit_type: "weight" | "volume" | "discrete";
+  allowed_units: string[] | null;
   category_id: string | null;
   image_url: string | null;
   categories?: { name: string } | { name: string }[] | null;
@@ -78,6 +80,9 @@ interface ActiveOrder {
   order_items: { id: string; quantity: number }[];
 }
 
+type UnitType = "weight" | "volume" | "discrete";
+type UnitOption = "g" | "kg" | "ml" | "l" | "pack" | "piece";
+
 export default function AdminPortal() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -95,6 +100,8 @@ export default function AdminPortal() {
   const [adminError, setAdminError] = useState<string | null>(null);
   const [draftRealPrice, setDraftRealPrice] = useState(0);
   const [draftCommission, setDraftCommission] = useState(0);
+  const [draftUnitType, setDraftUnitType] = useState<UnitType>("weight");
+  const [draftAllowedUnits, setDraftAllowedUnits] = useState<UnitOption[]>(["g", "kg"]);
   const [assignmentDrafts, setAssignmentDrafts] = useState<Record<string, string>>({});
   const [categoryNameDraft, setCategoryNameDraft] = useState("");
   const [adminInvites, setAdminInvites] = useState<AdminInvite[]>([]);
@@ -154,6 +161,8 @@ export default function AdminPortal() {
 
     setDraftRealPrice(editingProduct?.real_price ?? 0);
     setDraftCommission(editingProduct?.commission ?? 0);
+    setDraftUnitType(editingProduct?.unit_type ?? "weight");
+    setDraftAllowedUnits(getNormalizedAllowedUnits(editingProduct?.allowed_units, editingProduct?.unit_type ?? "weight"));
   }, [editingProduct, isModalOpen]);
 
   const fetchData = async () => {
@@ -204,7 +213,7 @@ export default function AdminPortal() {
       );
     }
 
-    if (productsRes.data) setProducts(productsRes.data);
+    if (productsRes.data) setProducts(productsRes.data.map(mapProductRecord));
     if (categoriesRes.data) setCategories(categoriesRes.data);
     if (agentsRes.data) setAgents(agentsRes.data);
     if (activeOrdersRes.data) setActiveOrders(activeOrdersRes.data);
@@ -283,6 +292,8 @@ export default function AdminPortal() {
       name: formData.get("name") as string,
       real_price: Number(formData.get("real_price")),
       commission: Number(formData.get("commission")),
+      unit_type: draftUnitType,
+      allowed_units: draftAllowedUnits,
       category_id: formData.get("category_id") as string,
       image_url: imagePreview || (formData.get("image_url") as string),
     };
@@ -474,7 +485,7 @@ export default function AdminPortal() {
                   <button onClick={() => setIsCategoryModalOpen(true)} className="min-h-12 rounded-3xl border border-slate-200 bg-white px-6 py-4 text-sm font-black uppercase italic text-slate-900 shadow-sm transition-all hover:-translate-y-0.5">
                     New Category
                   </button>
-                  <button onClick={() => { setEditingProduct(null); setDraftRealPrice(0); setDraftCommission(0); setIsModalOpen(true); }} className="min-h-12 rounded-3xl bg-slate-900 px-8 py-4 text-sm font-black uppercase italic text-white shadow-xl transition-all hover:scale-[1.02] active:scale-95">Register Product</button>
+                  <button onClick={() => { setEditingProduct(null); setDraftRealPrice(0); setDraftCommission(0); setDraftUnitType("weight"); setDraftAllowedUnits(["g", "kg"]); setIsModalOpen(true); }} className="min-h-12 rounded-3xl bg-slate-900 px-8 py-4 text-sm font-black uppercase italic text-white shadow-xl transition-all hover:scale-[1.02] active:scale-95">Register Product</button>
                </div>
             </header>
 
@@ -497,7 +508,12 @@ export default function AdminPortal() {
                              </div>
                           </td>
                           <td className="p-8">
-                             <span className="px-3 py-1 bg-white border rounded-full text-[10px] font-black uppercase text-slate-400">{getCategoryName(p.categories)}</span>
+                             <div className="flex flex-wrap items-center gap-2">
+                               <span className="px-3 py-1 bg-white border rounded-full text-[10px] font-black uppercase text-slate-400">{getCategoryName(p.categories)}</span>
+                               <span className="px-3 py-1 bg-white border rounded-full text-[10px] font-black uppercase text-slate-400">
+                                 {formatAllowedUnits(p.allowed_units, p.unit_type)}
+                               </span>
+                             </div>
                           </td>
                           <td className="p-8">
                              <p className="font-black text-slate-900">₹{p.final_price}</p>
@@ -745,6 +761,62 @@ export default function AdminPortal() {
                     </div>
                  </div>
 
+                 <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Measurement Type</label>
+                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                          {UNIT_TYPE_OPTIONS.map((option) => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() => {
+                                setDraftUnitType(option.value);
+                                setDraftAllowedUnits(getDefaultUnitsForType(option.value));
+                              }}
+                              className={`min-h-14 rounded-2xl border px-4 text-left transition-all ${
+                                draftUnitType === option.value
+                                  ? "border-[var(--accent-deep)] bg-[rgba(242,106,46,0.08)] text-slate-900"
+                                  : "border-gray-200 bg-gray-50 text-slate-500"
+                              }`}
+                            >
+                              <span className="block text-[11px] font-black uppercase tracking-[0.18em]">
+                                {option.label}
+                              </span>
+                              <span className="mt-1 block text-xs font-semibold">
+                                {option.help}
+                              </span>
+                            </button>
+                          ))}
+                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Allowed Units</label>
+                       <div className="flex flex-wrap gap-2 rounded-[1.75rem] border border-gray-100 bg-gray-50 p-3">
+                          {getUnitOptionsForType(draftUnitType).map((unitOption) => {
+                            const active = draftAllowedUnits.includes(unitOption);
+                            return (
+                              <button
+                                key={unitOption}
+                                type="button"
+                                onClick={() => setDraftAllowedUnits(toggleUnitSelection(draftUnitType, draftAllowedUnits, unitOption))}
+                                className={`min-h-11 rounded-full px-4 text-sm font-black uppercase tracking-[0.16em] transition-all ${
+                                  active
+                                    ? "bg-slate-900 text-white"
+                                    : "border border-gray-200 bg-white text-slate-500"
+                                }`}
+                              >
+                                {unitOption}
+                              </button>
+                            );
+                          })}
+                       </div>
+                       <p className="text-xs font-bold text-slate-400">
+                          Customers will only see these units while choosing quantity for this product.
+                       </p>
+                    </div>
+                 </div>
+
                  <div className="rounded-[1.75rem] border border-gray-100 bg-gray-50 px-5 py-5">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Customer-facing final price</p>
                     <p className="mt-2 text-3xl font-black italic tracking-tight text-slate-900">
@@ -778,6 +850,83 @@ export default function AdminPortal() {
       </main>
     </div>
   );
+}
+
+const UNIT_TYPE_OPTIONS: { value: UnitType; label: string; help: string }[] = [
+  { value: "weight", label: "Weight", help: "Use for produce, grains, and solids." },
+  { value: "volume", label: "Volume", help: "Use for milk, oils, and other liquids." },
+  { value: "discrete", label: "Discrete", help: "Use for packets, pieces, and countable items." },
+];
+
+function getDefaultUnitsForType(unitType: UnitType): UnitOption[] {
+  if (unitType === "volume") {
+    return ["ml", "l"];
+  }
+
+  if (unitType === "discrete") {
+    return ["pack", "piece"];
+  }
+
+  return ["g", "kg"];
+}
+
+function getUnitOptionsForType(unitType: UnitType): UnitOption[] {
+  return getDefaultUnitsForType(unitType);
+}
+
+function getNormalizedAllowedUnits(
+  allowedUnits: string[] | null | undefined,
+  unitType: UnitType,
+): UnitOption[] {
+  const supportedUnits = getUnitOptionsForType(unitType);
+  const normalizedUnits = (allowedUnits ?? []).filter((unit): unit is UnitOption =>
+    supportedUnits.includes(unit as UnitOption),
+  );
+
+  return normalizedUnits.length > 0 ? normalizedUnits : supportedUnits;
+}
+
+function mapProductRecord(product: {
+  id: string;
+  name: string;
+  real_price: number;
+  commission: number;
+  final_price: number;
+  unit_type: string;
+  allowed_units: unknown;
+  category_id: string | null;
+  image_url: string | null;
+  categories?: { name: string } | { name: string }[] | null;
+}): Product {
+  const unitType = isUnitType(product.unit_type) ? product.unit_type : "weight";
+  const allowedUnits = Array.isArray(product.allowed_units)
+    ? product.allowed_units.filter((unit): unit is string => typeof unit === "string")
+    : null;
+
+  return {
+    ...product,
+    unit_type: unitType,
+    allowed_units: getNormalizedAllowedUnits(allowedUnits, unitType),
+  };
+}
+
+function isUnitType(value: string): value is UnitType {
+  return value === "weight" || value === "volume" || value === "discrete";
+}
+
+function toggleUnitSelection(
+  unitType: UnitType,
+  currentUnits: UnitOption[],
+  unit: UnitOption,
+): UnitOption[] {
+  const supportedUnits = getUnitOptionsForType(unitType);
+  const nextUnits = currentUnits.includes(unit)
+    ? currentUnits.filter((currentUnit) => currentUnit !== unit)
+    : [...currentUnits, unit];
+
+  const filteredUnits = nextUnits.filter((currentUnit) => supportedUnits.includes(currentUnit));
+
+  return filteredUnits.length > 0 ? filteredUnits : [unit];
 }
 
 function SidebarItem({ icon, label, active, onClick }: { icon: React.ReactNode, label: string, active: boolean, onClick: () => void }) {
@@ -966,6 +1115,10 @@ function getCategoryName(category: Product["categories"]) {
   }
 
   return category?.name ?? "Uncategorized";
+}
+
+function formatAllowedUnits(allowedUnits: string[] | null, unitType: UnitType) {
+  return getNormalizedAllowedUnits(allowedUnits, unitType).join(" / ");
 }
 
 function formatDeliveryStatus(status: string | null) {

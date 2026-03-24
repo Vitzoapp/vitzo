@@ -1,11 +1,15 @@
-export type WeightUnit = "g" | "kg";
+export type WeightUnit = "g" | "kg" | "ml" | "l" | "pack" | "piece";
 
 export function roundCurrency(value: number) {
   return Math.round(value * 100) / 100;
 }
 
 export function weightToGrams(value: number, unit: WeightUnit) {
-  return unit === "kg" ? Math.round(value * 1000) : Math.round(value);
+  if (unit === "kg" || unit === "l") {
+    return Math.round(value * 1000);
+  }
+
+  return Math.round(value);
 }
 
 export function formatWeightLabel(weightInGrams: number) {
@@ -26,4 +30,29 @@ export function calculateWeightedCommission(commissionPerKg: number, weightInGra
 
 export function buildCartLineId(productId: string, weightInGrams: number) {
   return `${productId}:${weightInGrams}`;
+}
+
+export function formatSelectionLabel(value: number, unit: WeightUnit) {
+  if (unit === "kg" || unit === "l") {
+    const normalizedValue = Number.isInteger(value) ? value.toString() : value.toFixed(1);
+    return `${normalizedValue}${unit}`;
+  }
+
+  return `${Math.round(value)}${unit}`;
+}
+
+export function getUnitPriceLabel(unit: WeightUnit) {
+  if (unit === "ml" || unit === "l") {
+    return "/ l";
+  }
+
+  if (unit === "pack") {
+    return "/ pack";
+  }
+
+  if (unit === "piece") {
+    return "/ piece";
+  }
+
+  return "/ kg";
 }
