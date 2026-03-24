@@ -28,6 +28,8 @@ interface BatchSnapshot {
 const heroImage =
   "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1600&q=80";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Vitzo Grocery Delivery in Kozhikode",
   description:
