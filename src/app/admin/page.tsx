@@ -368,7 +368,11 @@ export default function AdminPortal() {
     }
 
     if (typeof window !== "undefined" && data?.[0]?.invite_token) {
-      setInviteLink(`${window.location.origin}/login?admin_invite=${encodeURIComponent(data[0].invite_token)}`);
+      setInviteLink(
+        `${window.location.origin}/login?admin_invite=${encodeURIComponent(
+          data[0].invite_token,
+        )}&next=${encodeURIComponent("/admin")}`,
+      );
     }
 
     setInviteEmailDraft("");
@@ -623,6 +627,9 @@ export default function AdminPortal() {
                   <div className="mt-6 rounded-[1.9rem] border border-white/14 bg-white/10 p-5">
                     <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/56">Latest invite link</p>
                     <p className="mt-3 break-all text-sm font-bold text-white/86">{inviteLink}</p>
+                    <p className="mt-3 text-xs font-bold uppercase tracking-[0.16em] text-white/56">
+                      Share this link with your team member. After sign-in, Vitzo will grant admin access automatically.
+                    </p>
                     <button
                       type="button"
                       onClick={copyInviteLink}

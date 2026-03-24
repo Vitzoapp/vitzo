@@ -45,15 +45,18 @@ BEGIN
 
   UPDATE public.admin_invites
   SET status = 'revoked'
-  WHERE invited_email = v_email
-    AND status = 'pending';
+  WHERE public.admin_invites.invited_email = v_email
+    AND public.admin_invites.status = 'pending';
 
   v_token := ENCODE(gen_random_bytes(18), 'hex');
 
   RETURN QUERY
   INSERT INTO public.admin_invites (invited_email, invite_token, invited_by)
   VALUES (v_email, v_token, auth.uid())
-  RETURNING admin_invites.invite_token, admin_invites.invited_email, admin_invites.expires_at;
+  RETURNING
+    public.admin_invites.invite_token,
+    public.admin_invites.invited_email,
+    public.admin_invites.expires_at;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
