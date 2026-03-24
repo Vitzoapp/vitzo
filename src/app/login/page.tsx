@@ -8,29 +8,51 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/lib/supabase";
 
+const REFERRAL_STORAGE_KEY = "vitzo_referral_code";
+
+function normalizeReferralCode(value: string | null) {
+  const normalized = value?.trim().toUpperCase() ?? "";
+  return /^[A-Z0-9]{4,32}$/.test(normalized) ? normalized : null;
+}
+
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/";
   const authError = searchParams.get("error");
-  const referralCode = searchParams.get("ref");
+  const urlReferralCode = normalizeReferralCode(searchParams.get("ref"));
+  const [referralCode, setReferralCode] = useState<string | null>(urlReferralCode);
   const [origin, setOrigin] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setOrigin(window.location.origin);
+
+      const storedReferralCode = normalizeReferralCode(
+        window.localStorage.getItem(REFERRAL_STORAGE_KEY),
+      );
+
+      if (urlReferralCode) {
+        window.localStorage.setItem(REFERRAL_STORAGE_KEY, urlReferralCode);
+        setReferralCode(urlReferralCode);
+      } else if (storedReferralCode) {
+        setReferralCode(storedReferralCode);
+      }
     }
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
+        if (typeof window !== "undefined") {
+          window.localStorage.removeItem(REFERRAL_STORAGE_KEY);
+        }
         router.push(next);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [router, next]);
+  }, [router, next, urlReferralCode]);
 
   return (
     <div className="min-h-[calc(100svh-5rem)] bg-[var(--background)] px-4 py-12 sm:px-6 lg:px-8">
@@ -78,7 +100,7 @@ function LoginContent() {
 
             {referralCode && (
               <div className="mt-6 rounded-[1.5rem] border border-[rgba(125,207,89,0.28)] bg-[rgba(125,207,89,0.12)] px-4 py-4 text-sm text-[var(--forest-950)]">
-                Referral code <span className="font-semibold">{referralCode}</span> will be linked to this account after sign-up.
+                This invite link is active. Referral <span className="font-semibold">{referralCode}</span> will be linked automatically after sign-up.
               </div>
             )}
 

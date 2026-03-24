@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Bebas_Neue, Sora } from "next/font/google";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { CartProvider } from "@/context/CartContext";
 import { SearchProvider } from "@/context/SearchContext";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
+import ReferralAttribution from "@/components/ReferralAttribution";
 import "./globals.css";
 
 const display = Bebas_Neue({
@@ -57,6 +58,9 @@ export default function RootLayout({
       <body className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
         <CartProvider>
           <SearchProvider>
+            <Suspense fallback={null}>
+              <ReferralAttribution />
+            </Suspense>
             <Navbar />
             <main className="flex-grow">{children}</main>
             <Footer />

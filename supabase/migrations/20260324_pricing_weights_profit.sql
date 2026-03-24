@@ -1,7 +1,23 @@
 BEGIN;
 
-ALTER TABLE public.products
-  RENAME COLUMN price TO real_price;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'products'
+      AND column_name = 'price'
+  ) AND NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'products'
+      AND column_name = 'real_price'
+  ) THEN
+    EXECUTE 'ALTER TABLE public.products RENAME COLUMN price TO real_price';
+  END IF;
+END $$;
 
 ALTER TABLE public.products
   DROP COLUMN IF EXISTS stock;

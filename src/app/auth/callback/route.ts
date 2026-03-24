@@ -1,11 +1,22 @@
+import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
+
+const REFERRAL_COOKIE_KEY = "vitzo_referral_code";
+
+function normalizeReferralCode(value: string | null) {
+  const normalized = value?.trim().toUpperCase() ?? "";
+  return /^[A-Z0-9]{4,32}$/.test(normalized) ? normalized : null;
+}
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const nextParam = requestUrl.searchParams.get("next");
-  const referralCode = requestUrl.searchParams.get("ref");
+  const cookieStore = await cookies();
+  const referralCode =
+    normalizeReferralCode(requestUrl.searchParams.get("ref")) ||
+    normalizeReferralCode(cookieStore.get(REFERRAL_COOKIE_KEY)?.value ?? null);
   const next =
     nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")
       ? nextParam
@@ -32,7 +43,9 @@ export async function GET(request: Request) {
       ) {
         const redirectUrl = new URL(next, requestUrl.origin);
         redirectUrl.searchParams.set("referral_error", referralError.message);
-        return NextResponse.redirect(redirectUrl);
+        const response = NextResponse.redirect(redirectUrl);
+        response.cookies.delete(REFERRAL_COOKIE_KEY);
+        return response;
       }
     }
   }
@@ -44,5 +57,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.redirect(`${requestUrl.origin}${next}`);
+  const response = NextResponse.redirect(`${requestUrl.origin}${next}`);
+  response.cookies.delete(REFERRAL_COOKIE_KEY);
+  return response;
 }

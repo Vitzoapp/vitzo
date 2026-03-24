@@ -169,7 +169,7 @@ export default function ProfilePage() {
       return;
     }
 
-    const referralLink = `${origin}/login?ref=${encodeURIComponent(profile.referral_code)}`;
+    const referralLink = `${origin}/?ref=${encodeURIComponent(profile.referral_code)}`;
     await navigator.clipboard.writeText(referralLink);
     setCopyMessage("Referral link copied.");
     window.setTimeout(() => setCopyMessage(null), 2200);
@@ -264,6 +264,11 @@ export default function ProfilePage() {
                     Copy referral link
                   </button>
                 </div>
+                {origin && profile?.referral_code && (
+                  <p className="mt-4 break-all text-sm text-[var(--forest-700)]">
+                    {origin}/?ref={profile.referral_code}
+                  </p>
+                )}
                 {copyMessage && (
                   <p className="mt-3 text-sm font-semibold text-[var(--accent-deep)]">
                     {copyMessage}
