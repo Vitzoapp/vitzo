@@ -82,19 +82,19 @@ BEGIN
     SELECT
       'Morning'::TEXT,
       v_now_ist::date,
-      ((v_now_ist::date::TEXT || ' 07:59:59')::timestamp AT TIME ZONE 'Asia/Kolkata');
+      ((v_now_ist::date::TEXT || ' 08:00:00')::timestamp AT TIME ZONE 'Asia/Kolkata');
   ELSIF v_now_ist::time < TIME '15:00' THEN
     RETURN QUERY
     SELECT
       'Evening'::TEXT,
       v_now_ist::date,
-      ((v_now_ist::date::TEXT || ' 14:59:59')::timestamp AT TIME ZONE 'Asia/Kolkata');
+      ((v_now_ist::date::TEXT || ' 15:00:00')::timestamp AT TIME ZONE 'Asia/Kolkata');
   ELSE
     RETURN QUERY
     SELECT
       'Morning'::TEXT,
       (v_now_ist::date + INTERVAL '1 day')::date,
-      ((((v_now_ist::date + INTERVAL '1 day')::date)::TEXT || ' 07:59:59')::timestamp AT TIME ZONE 'Asia/Kolkata');
+      ((((v_now_ist::date + INTERVAL '1 day')::date)::TEXT || ' 08:00:00')::timestamp AT TIME ZONE 'Asia/Kolkata');
   END IF;
 END;
 $$ LANGUAGE plpgsql STABLE;
@@ -179,9 +179,9 @@ BEGIN
   v_now_ist := NOW() AT TIME ZONE 'Asia/Kolkata';
   v_cutoff := CASE
     WHEN v_order.delivery_batch = 'Morning'
-      THEN (v_order.delivery_batch_date::TEXT || ' 07:59:59')::timestamp
+      THEN (v_order.delivery_batch_date::TEXT || ' 08:00:00')::timestamp
     ELSE
-      (v_order.delivery_batch_date::TEXT || ' 14:59:59')::timestamp
+      (v_order.delivery_batch_date::TEXT || ' 15:00:00')::timestamp
   END;
 
   IF v_now_ist > v_cutoff THEN

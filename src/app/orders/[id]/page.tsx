@@ -312,7 +312,7 @@ export default function OrderTrackingPage() {
     if (error) {
       setCancelError(
         error.message === "CANCELLATION_WINDOW_CLOSED"
-          ? "This batch is already locked. Morning orders close at 7:59 AM IST and Evening orders close at 2:59 PM IST."
+          ? "This batch is already locked. Morning orders close at 8:00 AM IST and Evening orders close at 3:00 PM IST."
           : error.message.replaceAll("_", " "),
       );
       setCancelling(false);

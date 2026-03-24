@@ -9,6 +9,7 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/lib/supabase";
 
 const REFERRAL_STORAGE_KEY = "vitzo_referral_code";
+const ADMIN_INVITE_STORAGE_KEY = "vitzo_admin_invite";
 
 function normalizeReferralCode(value: string | null) {
   const normalized = value?.trim().toUpperCase() ?? "";
@@ -21,7 +22,9 @@ function LoginContent() {
   const next = searchParams.get("next") || "/";
   const authError = searchParams.get("error");
   const urlReferralCode = normalizeReferralCode(searchParams.get("ref"));
+  const urlAdminInvite = searchParams.get("admin_invite");
   const [referralCode, setReferralCode] = useState<string | null>(urlReferralCode);
+  const [adminInviteToken, setAdminInviteToken] = useState<string | null>(urlAdminInvite);
   const [origin, setOrigin] = useState("");
 
   useEffect(() => {
@@ -38,6 +41,14 @@ function LoginContent() {
       } else if (storedReferralCode) {
         setReferralCode(storedReferralCode);
       }
+
+      const storedAdminInvite = window.localStorage.getItem(ADMIN_INVITE_STORAGE_KEY);
+      if (urlAdminInvite) {
+        window.localStorage.setItem(ADMIN_INVITE_STORAGE_KEY, urlAdminInvite);
+        setAdminInviteToken(urlAdminInvite);
+      } else if (storedAdminInvite) {
+        setAdminInviteToken(storedAdminInvite);
+      }
     }
 
     const {
@@ -46,13 +57,14 @@ function LoginContent() {
       if (session) {
         if (typeof window !== "undefined") {
           window.localStorage.removeItem(REFERRAL_STORAGE_KEY);
+          window.localStorage.removeItem(ADMIN_INVITE_STORAGE_KEY);
         }
         router.push(next);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [router, next, urlReferralCode]);
+  }, [router, next, urlAdminInvite, urlReferralCode]);
 
   return (
     <div className="min-h-[calc(100svh-5rem)] bg-[var(--background)] px-4 py-12 sm:px-6 lg:px-8">
@@ -104,6 +116,12 @@ function LoginContent() {
               </div>
             )}
 
+            {adminInviteToken && (
+              <div className="mt-6 rounded-[1.5rem] border border-[rgba(24,49,40,0.12)] bg-[rgba(24,49,40,0.05)] px-4 py-4 text-sm text-[var(--forest-950)]">
+                This admin invitation will be applied automatically after sign-in.
+              </div>
+            )}
+
             {authError && (
               <div className="mt-6 rounded-[1.5rem] border border-[var(--line-soft)] bg-[rgba(242,106,46,0.08)] px-4 py-4 text-sm text-[var(--forest-950)]">
                 {authError}
@@ -150,7 +168,7 @@ function LoginContent() {
                 providers={["google"]}
                 redirectTo={
                   origin
-                    ? `${origin}/auth/callback?next=${encodeURIComponent(next)}${referralCode ? `&ref=${encodeURIComponent(referralCode)}` : ""}`
+                    ? `${origin}/auth/callback?next=${encodeURIComponent(next)}${referralCode ? `&ref=${encodeURIComponent(referralCode)}` : ""}${adminInviteToken ? `&admin_invite=${encodeURIComponent(adminInviteToken)}` : ""}`
                     : ""
                 }
               />

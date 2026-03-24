@@ -12,12 +12,12 @@ interface BatchSnapshot {
 
 function getBatchConfig(snapshot: BatchSnapshot) {
   const isMorning = snapshot.delivery_batch === "Morning";
-  const cutoffTime = isMorning ? "07:59:59" : "14:59:59";
-  const deliveryTime = isMorning ? "13:00:00" : "20:00:00";
+  const cutoffTime = isMorning ? "08:00:00" : "15:00:00";
+  const deliveryTime = isMorning ? "10:00:00" : "17:00:00";
 
   return {
-    closesLabel: isMorning ? "Closes 7:59 AM IST" : "Closes 2:59 PM IST",
-    deliveryLabel: isMorning ? "Expected by 1:00 PM" : "Expected by 8:00 PM",
+    closesLabel: isMorning ? "Closes 8:00 AM IST" : "Closes 3:00 PM IST",
+    deliveryLabel: isMorning ? "Expected by 10:00 AM" : "Expected by 5:00 PM",
     cutoffDate: new Date(`${snapshot.batch_date}T${cutoffTime}+05:30`),
     deliveryDate: new Date(`${snapshot.batch_date}T${deliveryTime}+05:30`),
   };

@@ -111,6 +111,9 @@ export default async function Home() {
                   Browse aisles
                 </Link>
               </div>
+              <div className="mt-8 lg:hidden">
+                <LiveBatchCounter initialSnapshot={batchSnapshot} />
+              </div>
             </div>
 
             <div className="hidden max-w-[24rem] self-center lg:block">

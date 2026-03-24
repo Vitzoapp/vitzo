@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { NextResponse } from "next/server";
 
 const REFERRAL_COOKIE_KEY = "vitzo_referral_code";
+const ADMIN_INVITE_COOKIE_KEY = "vitzo_admin_invite";
 
 function normalizeReferralCode(value: string | null) {
   const normalized = value?.trim().toUpperCase() ?? "";
@@ -14,6 +15,10 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get("code");
   const nextParam = requestUrl.searchParams.get("next");
   const cookieStore = await cookies();
+  const adminInviteToken =
+    requestUrl.searchParams.get("admin_invite") ||
+    cookieStore.get(ADMIN_INVITE_COOKIE_KEY)?.value ||
+    null;
   const referralCode =
     normalizeReferralCode(requestUrl.searchParams.get("ref")) ||
     normalizeReferralCode(cookieStore.get(REFERRAL_COOKIE_KEY)?.value ?? null);
@@ -45,6 +50,7 @@ export async function GET(request: Request) {
         redirectUrl.searchParams.set("referral_error", referralError.message);
         const response = NextResponse.redirect(redirectUrl);
         response.cookies.delete(REFERRAL_COOKIE_KEY);
+        response.cookies.delete(ADMIN_INVITE_COOKIE_KEY);
         return response;
       }
     }
@@ -54,6 +60,25 @@ export async function GET(request: Request) {
     } = await supabase.auth.getUser();
 
     if (user) {
+      if (adminInviteToken) {
+        const { error: adminInviteError } = await supabase.rpc("accept_admin_invite", {
+          p_invite_token: adminInviteToken,
+        });
+
+        if (
+          adminInviteError &&
+          adminInviteError.message !== "ADMIN_INVITE_INVALID" &&
+          adminInviteError.message !== "ADMIN_INVITE_EXPIRED"
+        ) {
+          const redirectUrl = new URL(next, requestUrl.origin);
+          redirectUrl.searchParams.set("admin_invite_error", adminInviteError.message);
+          const response = NextResponse.redirect(redirectUrl);
+          response.cookies.delete(REFERRAL_COOKIE_KEY);
+          response.cookies.delete(ADMIN_INVITE_COOKIE_KEY);
+          return response;
+        }
+      }
+
       const { data: profile } = await supabase
         .from("profiles")
         .select("address, city, pincode, phone_number")
@@ -69,6 +94,7 @@ export async function GET(request: Request) {
         onboardingUrl.searchParams.set("next", next);
         const response = NextResponse.redirect(onboardingUrl);
         response.cookies.delete(REFERRAL_COOKIE_KEY);
+        response.cookies.delete(ADMIN_INVITE_COOKIE_KEY);
         return response;
       }
     }
@@ -83,5 +109,6 @@ export async function GET(request: Request) {
 
   const response = NextResponse.redirect(`${requestUrl.origin}${next}`);
   response.cookies.delete(REFERRAL_COOKIE_KEY);
+  response.cookies.delete(ADMIN_INVITE_COOKIE_KEY);
   return response;
 }

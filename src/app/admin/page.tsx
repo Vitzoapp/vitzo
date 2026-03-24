@@ -52,6 +52,15 @@ interface Agent {
   is_active: boolean | null;
 }
 
+interface AdminInvite {
+  id: string;
+  invited_email: string;
+  invite_token: string;
+  status: string;
+  created_at: string;
+  expires_at: string;
+}
+
 interface ActiveOrder {
   agent_id: string | null;
   assigned_agent_id: string | null;
@@ -88,6 +97,9 @@ export default function AdminPortal() {
   const [draftCommission, setDraftCommission] = useState(0);
   const [assignmentDrafts, setAssignmentDrafts] = useState<Record<string, string>>({});
   const [categoryNameDraft, setCategoryNameDraft] = useState("");
+  const [adminInvites, setAdminInvites] = useState<AdminInvite[]>([]);
+  const [inviteEmailDraft, setInviteEmailDraft] = useState("");
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
 
   useEffect(() => {
     let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -147,7 +159,7 @@ export default function AdminPortal() {
   const fetchData = async () => {
     setLoading(true);
     setAdminError(null);
-    const [productsRes, categoriesRes, agentsRes, activeOrdersRes, profitRes] = await Promise.all([
+    const [productsRes, categoriesRes, agentsRes, activeOrdersRes, profitRes, adminInvitesRes] = await Promise.all([
       supabase.from('products').select('*, categories(name)').order('created_at', { ascending: false }),
       supabase.from('categories').select('*'),
       supabase.from('agents').select('*').order('created_at', { ascending: false }),
@@ -173,15 +185,20 @@ export default function AdminPortal() {
         .neq("delivery_status", "cancelled")
         .neq("status", "cancelled")
         .order("created_at", { ascending: false }),
-      supabase.rpc("get_total_delivered_profit")
+      supabase.rpc("get_total_delivered_profit"),
+      supabase
+        .from("admin_invites")
+        .select("*")
+        .order("created_at", { ascending: false }),
     ]);
 
-    if (productsRes.error || categoriesRes.error || agentsRes.error || activeOrdersRes.error || profitRes.error) {
+    if (productsRes.error || categoriesRes.error || agentsRes.error || activeOrdersRes.error || profitRes.error || adminInvitesRes.error) {
       setAdminError(
         productsRes.error?.message ||
           categoriesRes.error?.message ||
           agentsRes.error?.message ||
           activeOrdersRes.error?.message ||
+          adminInvitesRes.error?.message ||
           profitRes.error?.message ||
           "Failed to load admin data.",
       );
@@ -192,6 +209,7 @@ export default function AdminPortal() {
     if (agentsRes.data) setAgents(agentsRes.data);
     if (activeOrdersRes.data) setActiveOrders(activeOrdersRes.data);
     if (typeof profitRes.data === "number") setTotalProfit(profitRes.data);
+    if (adminInvitesRes.data) setAdminInvites(adminInvitesRes.data);
     setLoading(false);
   };
 
@@ -329,6 +347,40 @@ export default function AdminPortal() {
     setCategoryNameDraft("");
     setIsCategoryModalOpen(false);
     fetchData();
+  };
+
+  const handleCreateAdminInvite = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const email = inviteEmailDraft.trim().toLowerCase();
+
+    if (!email) {
+      setAdminError("Invite email is required.");
+      return;
+    }
+
+    const { data, error } = await supabase.rpc("create_admin_invite", {
+      p_invited_email: email,
+    });
+
+    if (error) {
+      setAdminError(error.message);
+      return;
+    }
+
+    if (typeof window !== "undefined" && data?.[0]?.invite_token) {
+      setInviteLink(`${window.location.origin}/login?admin_invite=${encodeURIComponent(data[0].invite_token)}`);
+    }
+
+    setInviteEmailDraft("");
+    fetchData();
+  };
+
+  const copyInviteLink = async () => {
+    if (!inviteLink) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(inviteLink);
   };
 
   if (loading && !user) return <div className="p-20 text-center font-black animate-pulse text-[var(--color-primary-green)]">SECURE VERIFICATION...</div>;
@@ -531,6 +583,98 @@ export default function AdminPortal() {
                </table>
             </div>
            </>
+        )}
+
+        {activeTab === "team" && (
+          <>
+            <header className="mb-12">
+              <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Administrative Access</h2>
+              <p className="text-slate-400 font-bold">Invite other admins to manage Vitzo operations without touching the database manually.</p>
+            </header>
+
+            <div className="grid gap-8 xl:grid-cols-[0.95fr_1.05fr]">
+              <section className="rounded-[2.8rem] bg-[linear-gradient(135deg,#173127_0%,#29463b_50%,#ffd84d_100%)] p-8 text-white shadow-[0_28px_60px_rgba(23,49,39,0.18)]">
+                <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/60">Invite new admin</p>
+                <h3 className="mt-3 text-3xl font-black uppercase italic tracking-tight">
+                  Create a secure admin invite link
+                </h3>
+                <p className="mt-4 max-w-xl text-sm font-bold text-white/72">
+                  Invite links are email-specific and get applied automatically when the invited person signs in with the same email account.
+                </p>
+
+                <form onSubmit={handleCreateAdminInvite} className="mt-8 space-y-4">
+                  <input
+                    type="email"
+                    value={inviteEmailDraft}
+                    onChange={(event) => setInviteEmailDraft(event.target.value)}
+                    placeholder="admin@example.com"
+                    className="h-14 w-full rounded-full border border-white/14 bg-white/12 px-5 text-sm font-semibold text-white outline-none placeholder:text-white/45"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="inline-flex min-h-12 items-center justify-center rounded-full bg-white px-6 text-sm font-black uppercase tracking-[0.18em] text-slate-900"
+                  >
+                    Generate invite
+                  </button>
+                </form>
+
+                {inviteLink && (
+                  <div className="mt-6 rounded-[1.9rem] border border-white/14 bg-white/10 p-5">
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-white/56">Latest invite link</p>
+                    <p className="mt-3 break-all text-sm font-bold text-white/86">{inviteLink}</p>
+                    <button
+                      type="button"
+                      onClick={copyInviteLink}
+                      className="mt-4 inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--accent)] px-5 text-sm font-black uppercase tracking-[0.16em] text-[var(--forest-950)]"
+                    >
+                      Copy invite link
+                    </button>
+                  </div>
+                )}
+              </section>
+
+              <section className="rounded-[2.5rem] border border-gray-100 bg-white p-8 shadow-sm">
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Recent admin invites</p>
+                <h3 className="mt-3 text-2xl font-black uppercase italic tracking-tight text-slate-900">
+                  Invite activity
+                </h3>
+
+                <div className="mt-8 space-y-4">
+                  {adminInvites.length === 0 ? (
+                    <p className="text-sm font-bold text-slate-400">
+                      No admin invites have been created yet.
+                    </p>
+                  ) : (
+                    adminInvites.map((invite) => (
+                      <div key={invite.id} className="rounded-[1.8rem] border border-gray-100 bg-gray-50 px-5 py-5">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-sm font-black text-slate-900">{invite.invited_email}</p>
+                            <p className="mt-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                              Created {new Date(invite.created_at).toLocaleString("en-IN")}
+                            </p>
+                          </div>
+                          <span className={`inline-flex rounded-full px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] ${
+                            invite.status === "accepted"
+                              ? "bg-green-100 text-green-700"
+                              : invite.status === "revoked"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-amber-100 text-amber-800"
+                          }`}>
+                            {invite.status}
+                          </span>
+                        </div>
+                        <p className="mt-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
+                          Expires {new Date(invite.expires_at).toLocaleString("en-IN")}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </section>
+            </div>
+          </>
         )}
 
         {/* Modal for adding/editing products */}

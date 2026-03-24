@@ -102,6 +102,39 @@ export interface Database {
         };
         Relationships: [];
       };
+      admin_invites: {
+        Row: {
+          accepted_by: string | null;
+          created_at: string;
+          expires_at: string;
+          id: string;
+          invite_token: string;
+          invited_by: string;
+          invited_email: string;
+          status: string;
+        };
+        Insert: {
+          accepted_by?: string | null;
+          created_at?: string;
+          expires_at?: string;
+          id?: string;
+          invite_token: string;
+          invited_by: string;
+          invited_email: string;
+          status?: string;
+        };
+        Update: {
+          accepted_by?: string | null;
+          created_at?: string;
+          expires_at?: string;
+          id?: string;
+          invite_token?: string;
+          invited_by?: string;
+          invited_email?: string;
+          status?: string;
+        };
+        Relationships: [];
+      };
       wallets: {
         Row: {
           balance: number;
@@ -494,11 +527,27 @@ export interface Database {
       };
     };
     Functions: {
+      accept_admin_invite: {
+        Args: {
+          p_invite_token: string;
+        };
+        Returns: undefined;
+      };
       cancel_order_before_cutoff: {
         Args: {
           p_order_id: string;
         };
         Returns: Database["public"]["Tables"]["orders"]["Row"];
+      };
+      create_admin_invite: {
+        Args: {
+          p_invited_email: string;
+        };
+        Returns: {
+          expires_at: string;
+          invite_token: string;
+          invited_email: string;
+        }[];
       };
       get_current_batch_snapshot: {
         Args: Record<string, never>;
