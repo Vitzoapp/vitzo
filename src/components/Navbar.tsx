@@ -141,7 +141,7 @@ export default function Navbar() {
 
   return (
     <header
-      className={`sticky top-0 z-50 border-b backdrop-blur-xl transition-all duration-300 ${
+      className={`fixed inset-x-0 top-0 z-[80] border-b backdrop-blur-xl transition-all duration-300 ${
         isScrolled
           ? "border-[rgba(24,49,40,0.08)] bg-[rgba(255,246,234,0.96)] shadow-[0_16px_40px_rgba(24,49,40,0.08)]"
           : "border-[var(--line-soft)] bg-[rgba(255,246,234,0.82)]"

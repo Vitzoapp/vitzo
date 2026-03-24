@@ -400,15 +400,15 @@ export default function AdminPortal() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#fff7ee_0%,#ffffff_100%)] lg:flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-white p-8 flex flex-col sticky top-0 h-screen">
-          <Link href="/" className="text-2xl font-black italic uppercase mb-12 flex items-center gap-2">
+      <aside className="border-b border-white/8 bg-slate-900 px-4 py-5 text-white lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:border-b-0 lg:p-8">
+          <Link href="/" className="flex items-center gap-2 text-xl font-black uppercase italic sm:text-2xl lg:mb-12">
             <span className="text-[var(--color-secondary-green)]">V</span>-Admin
             <span className="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded-full NOT-italic tracking-widest font-bold">CORE</span>
           </Link>
           
-          <nav className="flex-1 space-y-2">
+          <nav className="mt-5 flex gap-2 overflow-x-auto pb-1 no-scrollbar lg:mt-0 lg:flex-1 lg:flex-col lg:space-y-2 lg:overflow-visible lg:pb-0">
              <SidebarItem 
                icon={<LayoutDashboard />} 
                label="Status View" 
@@ -435,15 +435,15 @@ export default function AdminPortal() {
              />
           </nav>
 
-          <div className="mt-auto border-t border-white/10 pt-8">
-             <button className="flex items-center gap-3 w-full p-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-2xl font-black uppercase text-xs italic transition-all" onClick={() => supabase.auth.signOut()}>
+          <div className="mt-5 border-t border-white/10 pt-5 lg:mt-auto lg:pt-8">
+             <button className="flex min-h-12 w-full items-center justify-center gap-3 rounded-2xl bg-red-500/10 p-4 text-xs font-black uppercase italic text-red-400 transition-all hover:bg-red-500/20" onClick={() => supabase.auth.signOut()}>
                 Terminate Session
              </button>
           </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-12 overflow-y-auto">
+      <main className="min-w-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:p-12">
         {adminError && (
           <div className="mb-8 rounded-[1.75rem] border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700">
             {adminError}
@@ -465,21 +465,21 @@ export default function AdminPortal() {
 
         {activeTab === "products" && (
            <>
-            <header className="flex justify-between items-center mb-12">
+            <header className="mb-10 flex flex-col gap-4 lg:mb-12 lg:flex-row lg:items-center lg:justify-between">
                <div>
-                  <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Inventory Flux</h2>
+                  <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic sm:text-4xl">Inventory Flux</h2>
                   <p className="text-slate-400 font-bold">Manage real-time grocery synchronization.</p>
                </div>
-               <div className="flex items-center gap-3">
-                  <button onClick={() => setIsCategoryModalOpen(true)} className="border border-slate-200 bg-white px-6 py-4 rounded-3xl font-black uppercase text-sm italic text-slate-900 shadow-sm hover:-translate-y-0.5 transition-all">
+               <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                  <button onClick={() => setIsCategoryModalOpen(true)} className="min-h-12 rounded-3xl border border-slate-200 bg-white px-6 py-4 text-sm font-black uppercase italic text-slate-900 shadow-sm transition-all hover:-translate-y-0.5">
                     New Category
                   </button>
-                  <button onClick={() => { setEditingProduct(null); setDraftRealPrice(0); setDraftCommission(0); setIsModalOpen(true); }} className="bg-slate-900 text-white px-8 py-4 rounded-3xl font-black uppercase text-sm italic shadow-xl hover:scale-105 active:scale-95 transition-all">Register Product</button>
+                  <button onClick={() => { setEditingProduct(null); setDraftRealPrice(0); setDraftCommission(0); setIsModalOpen(true); }} className="min-h-12 rounded-3xl bg-slate-900 px-8 py-4 text-sm font-black uppercase italic text-white shadow-xl transition-all hover:scale-[1.02] active:scale-95">Register Product</button>
                </div>
             </header>
 
-            <div className="bg-white rounded-[40px] shadow-2xl shadow-slate-200 border border-gray-100 overflow-hidden">
-               <table className="w-full text-left">
+            <div className="overflow-x-auto rounded-[2rem] border border-gray-100 bg-white shadow-xl shadow-slate-200/60 lg:rounded-[40px]">
+               <table className="min-w-[720px] w-full text-left">
                   <thead className="bg-gray-50 border-b">
                      <tr>
                         <th className="p-8 text-[11px] font-black uppercase text-slate-400">Identification</th>
@@ -517,13 +517,13 @@ export default function AdminPortal() {
 
         {activeTab === "agents" && (
            <>
-            <header className="mb-12">
-               <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Fleet Control</h2>
+            <header className="mb-10 lg:mb-12">
+               <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic sm:text-4xl">Fleet Control</h2>
                <p className="text-slate-400 font-bold">Monitor and authorize delivery agent activity.</p>
             </header>
 
-            <div className="bg-white rounded-[40px] shadow-2xl shadow-slate-200 border border-gray-100 overflow-hidden">
-               <table className="w-full text-left">
+            <div className="overflow-x-auto rounded-[2rem] border border-gray-100 bg-white shadow-xl shadow-slate-200/60 lg:rounded-[40px]">
+               <table className="min-w-[860px] w-full text-left">
                   <thead className="bg-gray-50 border-b">
                      <tr>
                         <th className="p-8 text-[11px] font-black uppercase text-slate-400">Agent Details</th>
@@ -591,13 +591,13 @@ export default function AdminPortal() {
 
         {activeTab === "team" && (
           <>
-            <header className="mb-12">
-              <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Administrative Access</h2>
+            <header className="mb-10 lg:mb-12">
+              <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic sm:text-4xl">Administrative Access</h2>
               <p className="text-slate-400 font-bold">Invite other admins to manage Vitzo operations without touching the database manually.</p>
             </header>
 
             <div className="grid gap-8 xl:grid-cols-[0.95fr_1.05fr]">
-              <section className="rounded-[2.8rem] bg-[linear-gradient(135deg,#173127_0%,#29463b_50%,#ffd84d_100%)] p-8 text-white shadow-[0_28px_60px_rgba(23,49,39,0.18)]">
+              <section className="rounded-[2.2rem] bg-[linear-gradient(135deg,#173127_0%,#29463b_50%,#ffd84d_100%)] p-6 text-white shadow-[0_28px_60px_rgba(23,49,39,0.18)] sm:rounded-[2.8rem] sm:p-8">
                 <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/60">Invite new admin</p>
                 <h3 className="mt-3 text-3xl font-black uppercase italic tracking-tight">
                   Create a secure admin invite link
@@ -617,7 +617,7 @@ export default function AdminPortal() {
                   />
                   <button
                     type="submit"
-                    className="inline-flex min-h-12 items-center justify-center rounded-full bg-white px-6 text-sm font-black uppercase tracking-[0.18em] text-slate-900"
+                    className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-white px-6 text-sm font-black uppercase tracking-[0.18em] text-slate-900 sm:w-auto"
                   >
                     Generate invite
                   </button>
@@ -641,7 +641,7 @@ export default function AdminPortal() {
                 )}
               </section>
 
-              <section className="rounded-[2.5rem] border border-gray-100 bg-white p-8 shadow-sm">
+              <section className="rounded-[2.2rem] border border-gray-100 bg-white p-6 shadow-sm sm:rounded-[2.5rem] sm:p-8">
                 <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Recent admin invites</p>
                 <h3 className="mt-3 text-2xl font-black uppercase italic tracking-tight text-slate-900">
                   Invite activity
@@ -687,9 +687,9 @@ export default function AdminPortal() {
         {/* Modal for adding/editing products */}
         {isCategoryModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-            <div className="bg-white rounded-[40px] w-full max-w-xl p-10 relative overflow-hidden">
-               <button onClick={() => setIsCategoryModalOpen(false)} className="absolute top-8 right-8 p-2 hover:bg-gray-100 rounded-full transition-all"><X className="h-6 w-6 text-slate-400" /></button>
-               <h3 className="text-3xl font-black text-slate-900 uppercase italic tracking-tighter">Create Category</h3>
+            <div className="relative w-full max-w-xl overflow-hidden rounded-[2rem] bg-white p-6 sm:rounded-[40px] sm:p-10">
+               <button onClick={() => setIsCategoryModalOpen(false)} className="absolute right-5 top-5 rounded-full p-2 transition-all hover:bg-gray-100 sm:right-8 sm:top-8"><X className="h-6 w-6 text-slate-400" /></button>
+               <h3 className="pr-10 text-2xl font-black uppercase italic tracking-tighter text-slate-900 sm:text-3xl">Create Category</h3>
                <p className="mt-3 text-sm font-bold text-slate-400">
                  Add a new aisle so products can be organized immediately in the storefront and admin inventory flow.
                </p>
@@ -716,12 +716,12 @@ export default function AdminPortal() {
 
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-            <div className="bg-white rounded-[40px] w-full max-w-2xl p-10 relative overflow-hidden">
-               <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 p-2 hover:bg-gray-100 rounded-full transition-all"><X className="h-6 w-6 text-slate-400" /></button>
-               <h3 className="text-3xl font-black text-slate-900 uppercase italic tracking-tighter mb-8">{editingProduct ? "Modify Product" : "New Registration"}</h3>
+            <div className="relative w-full max-w-2xl overflow-y-auto rounded-[2rem] bg-white p-6 sm:max-h-[90vh] sm:rounded-[40px] sm:p-10">
+               <button onClick={() => setIsModalOpen(false)} className="absolute right-5 top-5 rounded-full p-2 transition-all hover:bg-gray-100 sm:right-8 sm:top-8"><X className="h-6 w-6 text-slate-400" /></button>
+               <h3 className="mb-8 pr-10 text-2xl font-black uppercase italic tracking-tighter text-slate-900 sm:text-3xl">{editingProduct ? "Modify Product" : "New Registration"}</h3>
                
                <form onSubmit={handleAddEditProduct} className="space-y-6">
-                 <div className="grid grid-cols-2 gap-6">
+                 <div className="grid gap-6 sm:grid-cols-2">
                     <div className="space-y-2">
                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Product Name</label>
                        <input name="name" required defaultValue={editingProduct?.name} className="w-full h-14 bg-gray-50 border-2 border-gray-50 rounded-2xl px-4 font-bold focus:bg-white focus:border-[var(--color-primary-green)] outline-none" />
@@ -732,7 +732,7 @@ export default function AdminPortal() {
                     </div>
                  </div>
 
-                 <div className="grid grid-cols-2 gap-6">
+                 <div className="grid gap-6 sm:grid-cols-2">
                     <div className="space-y-2">
                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Category</label>
                        <select name="category_id" required defaultValue={editingProduct?.category_id ?? categories[0]?.id ?? ""} className="w-full h-14 bg-gray-50 border-2 border-gray-50 rounded-2xl px-4 font-bold focus:bg-white focus:border-[var(--color-primary-green)] outline-none">
@@ -754,8 +754,8 @@ export default function AdminPortal() {
 
                  <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Product Image</label>
-                    <div className="flex gap-4">
-                       <div className="h-32 w-32 border-2 border-dashed border-gray-200 rounded-3xl overflow-hidden relative group">
+                    <div className="flex flex-col gap-4 sm:flex-row">
+                       <div className="relative h-32 w-full overflow-hidden rounded-3xl border-2 border-dashed border-gray-200 sm:w-32">
                           {imagePreview || editingProduct?.image_url ? (
                             <Image src={imagePreview || editingProduct?.image_url || "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=800"} alt="Preview" fill className="object-cover" />
                           ) : (
@@ -784,10 +784,10 @@ function SidebarItem({ icon, label, active, onClick }: { icon: React.ReactNode, 
   return (
     <button 
       onClick={onClick}
-      className={`flex items-center gap-4 w-full p-5 rounded-[20px] font-black uppercase text-[11px] italic transition-all group ${active ? 'bg-white text-slate-900 shadow-xl border border-gray-100' : 'text-slate-500 hover:bg-white/5 hover:text-white'}`}
+      className={`group inline-flex min-h-12 shrink-0 items-center gap-3 rounded-[18px] px-4 py-3 text-[10px] font-black uppercase italic transition-all sm:text-[11px] lg:w-full lg:px-5 lg:py-5 ${active ? 'bg-white text-slate-900 shadow-xl border border-gray-100' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`}
     >
-      <div className={`${active ? 'text-slate-900' : 'text-slate-500 group-hover:text-white'} transition-colors`}>{icon}</div>
-      {label}
+      <div className={`${active ? 'text-slate-900' : 'text-slate-400 group-hover:text-white'} transition-colors`}>{icon}</div>
+      <span className="whitespace-nowrap">{label}</span>
     </button>
   );
 }
@@ -817,16 +817,16 @@ function DashboardContent({
 
   return (
     <>
-      <header className="mb-12">
-         <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Control Node</h2>
+      <header className="mb-10 lg:mb-12">
+         <h2 className="text-3xl font-black uppercase italic tracking-tighter text-slate-900 sm:text-4xl">Control Node</h2>
          <p className="text-slate-400 font-bold">Live profit, fleet readiness, and undelivered order activity.</p>
       </header>
 
-      <section className="overflow-hidden rounded-[2.9rem] bg-[linear-gradient(135deg,#173127_0%,#29463b_46%,#ffd84d_100%)] px-8 py-10 text-white shadow-[0_30px_70px_rgba(23,49,39,0.18)]">
+      <section className="overflow-hidden rounded-[2.2rem] bg-[linear-gradient(135deg,#173127_0%,#29463b_46%,#ffd84d_100%)] px-5 py-7 text-white shadow-[0_30px_70px_rgba(23,49,39,0.18)] sm:rounded-[2.9rem] sm:px-8 sm:py-10">
          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">Delivered profit</p>
          <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
-               <p className="text-6xl font-black italic tracking-tighter">₹{totalProfit.toFixed(2)}</p>
+               <p className="text-4xl font-black italic tracking-tighter sm:text-5xl lg:text-6xl">₹{totalProfit.toFixed(2)}</p>
                <p className="mt-3 max-w-xl text-sm font-bold text-white/72">
                  Commission is counted only after delivery is completed, so this number tracks realized profit instead of pending revenue.
                </p>
@@ -837,27 +837,27 @@ function DashboardContent({
          </div>
       </section>
 
-      <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:mt-10 sm:gap-6 md:grid-cols-3 lg:gap-8">
          <StatCard label="Product Inventory" value={productsCount.toString()} sub="Unique Assets" />
          <StatCard label="Active Fleet" value={agentsCount.toString()} sub="Delivery Units" />
          <StatCard label="Live Orders" value={activeOrders.length.toString()} sub="Undelivered" />
       </div>
 
-      <section className="mt-10 overflow-hidden rounded-[2.5rem] border border-gray-100 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-gray-100 px-8 py-6">
+      <section className="mt-8 overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-sm sm:mt-10 sm:rounded-[2.5rem]">
+        <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-5 sm:px-8 sm:py-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Status View</p>
-            <h3 className="mt-2 text-2xl font-black uppercase italic tracking-tight text-slate-900">
+            <h3 className="mt-2 text-xl font-black uppercase italic tracking-tight text-slate-900 sm:text-2xl">
               Live orders in motion
             </h3>
           </div>
-          <span className="rounded-full bg-amber-100 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-amber-800">
+          <span className="inline-flex w-fit rounded-full bg-amber-100 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-amber-800">
             {activeOrders.length} active
           </span>
         </div>
 
         {activeOrders.length === 0 ? (
-          <div className="px-8 py-16 text-center">
+          <div className="px-5 py-12 text-center sm:px-8 sm:py-16">
             <Truck className="mx-auto h-12 w-12 text-slate-300" />
             <p className="mt-4 text-lg font-black uppercase italic text-slate-500">
               No undelivered orders right now
@@ -869,7 +869,7 @@ function DashboardContent({
         ) : (
           <div className="divide-y divide-gray-100">
             {activeOrders.map((order) => (
-              <div key={order.id} className="grid gap-5 px-8 py-6 lg:grid-cols-[1.1fr_0.7fr_0.55fr_0.65fr] lg:items-center">
+              <div key={order.id} className="grid gap-5 px-5 py-5 sm:px-8 sm:py-6 lg:grid-cols-[1.1fr_0.7fr_0.55fr_0.65fr] lg:items-center">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
                     Order #{order.id.slice(0, 8)}
@@ -952,9 +952,9 @@ function DashboardContent({
 
 function StatCard({ label, value, sub }: { label: string, value: string, sub: string }) {
   return (
-    <div className="bg-white p-10 rounded-[40px] shadow-sm border border-gray-100 hover:shadow-2xl transition-all hover:-translate-y-1">
+    <div className="rounded-[2rem] border border-gray-100 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-2xl sm:rounded-[40px] sm:p-8 lg:p-10">
        <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{label}</span>
-       <p className="text-5xl font-black text-slate-900 italic tracking-tighter mt-2">{value}</p>
+       <p className="mt-2 text-4xl font-black italic tracking-tighter text-slate-900 sm:text-5xl">{value}</p>
        <p className="text-xs font-bold text-slate-400 mt-4 uppercase italic">{sub}</p>
     </div>
   );
