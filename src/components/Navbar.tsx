@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Clock3,
   LayoutGrid,
+  LogOut,
   Menu,
   Search,
   Settings,
@@ -29,13 +30,14 @@ interface Agent {
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
-  const { totalItems } = useCart();
+  const { totalItems, lastAddedItem } = useCart();
   const { searchQuery, setSearchQuery } = useSearch();
   const [user, setUser] = useState<User | null>(null);
   const [profileRole, setProfileRole] = useState("customer");
   const [agent, setAgent] = useState<Agent | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [showCartToast, setShowCartToast] = useState(false);
 
   useEffect(() => {
     const fetchAgent = async (userId: string) => {
@@ -86,6 +88,16 @@ export default function Navbar() {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!lastAddedItem) {
+      return;
+    }
+
+    setShowCartToast(true);
+    const timeoutId = window.setTimeout(() => setShowCartToast(false), 2200);
+    return () => window.clearTimeout(timeoutId);
+  }, [lastAddedItem]);
+
   const isAdmin = profileRole === "admin";
 
   const handleSearch = (event?: FormEvent) => {
@@ -101,6 +113,13 @@ export default function Navbar() {
 
     setIsMobileSearchOpen(false);
     setIsMenuOpen(false);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsMenuOpen(false);
+    router.replace("/");
+    router.refresh();
   };
 
   return (
@@ -167,15 +186,25 @@ export default function Navbar() {
           </button>
 
           {user ? (
-            <Link
-              href="/profile"
-              className="hidden items-center gap-3 rounded-full border border-[var(--line-soft)] bg-white/55 px-3 py-2 text-sm text-[var(--forest-950)] sm:inline-flex"
-            >
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--forest-950)] text-xs font-semibold text-white">
-                {user.email?.[0]?.toUpperCase() ?? "V"}
-              </span>
-              <span className="max-w-24 truncate">{user.email?.split("@")[0]}</span>
-            </Link>
+            <div className="hidden items-center gap-2 sm:flex">
+              <Link
+                href="/profile"
+                className="inline-flex items-center gap-3 rounded-full border border-[var(--line-soft)] bg-white/55 px-3 py-2 text-sm text-[var(--forest-950)]"
+              >
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--forest-950)] text-xs font-semibold text-white">
+                  {user.email?.[0]?.toUpperCase() ?? "V"}
+                </span>
+                <span className="max-w-24 truncate">{user.email?.split("@")[0]}</span>
+              </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--line-soft)] bg-white/55 text-[var(--forest-950)]"
+                aria-label="Log out"
+              >
+                <LogOut className="h-4.5 w-4.5" />
+              </button>
+            </div>
           ) : (
             <Link
               href="/login"
@@ -209,6 +238,17 @@ export default function Navbar() {
           </button>
         </div>
       </div>
+
+      {showCartToast && lastAddedItem && (
+        <div className="pointer-events-none absolute inset-x-0 top-full z-50 flex justify-center px-4">
+          <div className="mt-3 inline-flex items-center gap-3 rounded-full border border-[var(--line-soft)] bg-[var(--forest-950)] px-5 py-3 text-sm text-white shadow-[0_20px_45px_rgba(24,49,40,0.22)]">
+            <ShoppingBag className="h-4 w-4 text-[var(--accent)]" />
+            <span className="font-semibold">
+              Added {lastAddedItem.name} to bag
+            </span>
+          </div>
+        </div>
+      )}
 
       {isMobileSearchOpen && (
         <div className="border-t border-[var(--line-soft)] bg-[rgba(247,243,233,0.96)] px-4 py-4 md:hidden">
@@ -252,6 +292,16 @@ export default function Navbar() {
             )}
             {isAdmin && <MobileNavItem href="/admin" label="Admin" onClick={() => setIsMenuOpen(false)} />}
             {!user && <MobileNavItem href="/login" label="Login" onClick={() => setIsMenuOpen(false)} />}
+            {user && (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="inline-flex min-h-12 items-center justify-between rounded-[1.5rem] border border-[var(--line-soft)] bg-white/72 px-4 text-sm font-semibold text-[var(--forest-950)]"
+              >
+                Logout
+                <LogOut className="h-4 w-4 text-[var(--accent-deep)]" />
+              </button>
+            )}
           </nav>
         </div>
       )}

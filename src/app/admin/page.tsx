@@ -52,6 +52,10 @@ interface Agent {
 }
 
 interface ActiveOrder {
+  agent_id: string | null;
+  assigned_agent_id: string | null;
+  delivery_batch: string | null;
+  delivery_batch_date: string | null;
   id: string;
   created_at: string | null;
   total_amount: number;
@@ -80,6 +84,7 @@ export default function AdminPortal() {
   const [adminError, setAdminError] = useState<string | null>(null);
   const [draftRealPrice, setDraftRealPrice] = useState(0);
   const [draftCommission, setDraftCommission] = useState(0);
+  const [assignmentDrafts, setAssignmentDrafts] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -146,6 +151,10 @@ export default function AdminPortal() {
       supabase
         .from("orders")
         .select(`
+          agent_id,
+          assigned_agent_id,
+          delivery_batch,
+          delivery_batch_date,
           id,
           created_at,
           total_amount,
@@ -158,6 +167,8 @@ export default function AdminPortal() {
           order_items (id, quantity)
         `)
         .neq("delivery_status", "delivered")
+        .neq("delivery_status", "cancelled")
+        .neq("status", "cancelled")
         .order("created_at", { ascending: false }),
       supabase.rpc("get_total_delivered_profit")
     ]);
@@ -189,6 +200,32 @@ export default function AdminPortal() {
   const setAgentSalary = async (id: string, salary: number) => {
     const { error } = await supabase.from('agents').update({ salary }).eq('id', id);
     if (!error) fetchData();
+  };
+
+  const assignOrderToAgent = async (orderId: string) => {
+    const agentId = assignmentDrafts[orderId];
+
+    if (!agentId) {
+      setAdminError("Select an agent before assigning the order.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("orders")
+      .update({
+        agent_id: agentId,
+        assigned_agent_id: agentId,
+        delivery_status: "assigned",
+      })
+      .eq("id", orderId);
+
+    if (error) {
+      setAdminError(error.message);
+      return;
+    }
+
+    setAssignmentDrafts((prev) => ({ ...prev, [orderId]: "" }));
+    fetchData();
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -331,6 +368,10 @@ export default function AdminPortal() {
              agentsCount={agents.length}
              activeOrders={activeOrders}
              totalProfit={totalProfit}
+             agents={agents}
+             assignmentDrafts={assignmentDrafts}
+             setAssignmentDrafts={setAssignmentDrafts}
+             assignOrderToAgent={assignOrderToAgent}
            />
         )}
 
@@ -539,12 +580,24 @@ function DashboardContent({
   agentsCount,
   activeOrders,
   totalProfit,
+  agents,
+  assignmentDrafts,
+  setAssignmentDrafts,
+  assignOrderToAgent,
 }: {
   productsCount: number;
   agentsCount: number;
   activeOrders: ActiveOrder[];
   totalProfit: number;
+  agents: Agent[];
+  assignmentDrafts: Record<string, string>;
+  setAssignmentDrafts: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  assignOrderToAgent: (orderId: string) => void;
 }) {
+  const approvedAgents = agents.filter(
+    (agent) => agent.status === "approved" && agent.is_active,
+  );
+
   return (
     <>
       <header className="mb-12">
@@ -622,6 +675,36 @@ function DashboardContent({
                   <p className="mt-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
                     {order.order_items.length} items
                   </p>
+                  {!order.agents && (
+                    <div className="mt-3 flex flex-col gap-2">
+                      <select
+                        value={assignmentDrafts[order.id] ?? ""}
+                        onChange={(event) =>
+                          setAssignmentDrafts((prev) => ({
+                            ...prev,
+                            [order.id]: event.target.value,
+                          }))
+                        }
+                        className="h-10 rounded-full border border-gray-200 bg-white px-4 text-sm font-semibold text-slate-900 outline-none"
+                      >
+                        <option value="">Assign agent</option>
+                        {approvedAgents
+                          .filter((agent) => !order.shipping_area || agent.working_area === order.shipping_area)
+                          .map((agent) => (
+                            <option key={agent.id} value={agent.id}>
+                              {agent.full_name}
+                            </option>
+                          ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => assignOrderToAgent(order.id)}
+                        className="inline-flex h-10 items-center justify-center rounded-full bg-slate-900 px-4 text-xs font-black uppercase tracking-[0.16em] text-white"
+                      >
+                        Assign now
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div>

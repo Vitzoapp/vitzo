@@ -48,6 +48,30 @@ export async function GET(request: Request) {
         return response;
       }
     }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("address, city, pincode, phone_number")
+        .eq("id", user.id)
+        .single();
+
+      const needsOnboarding =
+        !profile?.address || !profile.city || !profile.pincode || !profile.phone_number;
+
+      if (needsOnboarding && next !== "/profile") {
+        const onboardingUrl = new URL("/profile", requestUrl.origin);
+        onboardingUrl.searchParams.set("onboarding", "1");
+        onboardingUrl.searchParams.set("next", next);
+        const response = NextResponse.redirect(onboardingUrl);
+        response.cookies.delete(REFERRAL_COOKIE_KEY);
+        return response;
+      }
+    }
   }
 
   if (!code) {

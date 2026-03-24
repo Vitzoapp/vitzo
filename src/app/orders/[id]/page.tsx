@@ -28,7 +28,10 @@ interface OrderItem {
 
 interface Order {
   id: string;
+  status: string | null;
   created_at: string | null;
+  delivery_batch: string | null;
+  delivery_batch_date: string | null;
   total_amount: number;
   delivery_status: string | null;
   delivery_pin: string | null;
@@ -92,6 +95,8 @@ export default function OrderTrackingPage() {
   const [hasRated, setHasRated] = useState(false);
   const [submittingRating, setSubmittingRating] = useState(false);
   const [ratingError, setRatingError] = useState<string | null>(null);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -106,7 +111,10 @@ export default function OrderTrackingPage() {
         .select(
           `
             id,
+            status,
             created_at,
+            delivery_batch,
+            delivery_batch_date,
             total_amount,
             delivery_status,
             delivery_pin,
@@ -167,10 +175,22 @@ export default function OrderTrackingPage() {
                     typeof payload.new.delivery_pin === "string" || payload.new.delivery_pin === null
                       ? payload.new.delivery_pin
                       : prev.delivery_pin,
+                  delivery_batch:
+                    typeof payload.new.delivery_batch === "string" || payload.new.delivery_batch === null
+                      ? payload.new.delivery_batch
+                      : prev.delivery_batch,
+                  delivery_batch_date:
+                    typeof payload.new.delivery_batch_date === "string" || payload.new.delivery_batch_date === null
+                      ? payload.new.delivery_batch_date
+                      : prev.delivery_batch_date,
                   delivery_status:
                     typeof payload.new.delivery_status === "string" || payload.new.delivery_status === null
                       ? payload.new.delivery_status
                       : prev.delivery_status,
+                  status:
+                    typeof payload.new.status === "string" || payload.new.status === null
+                      ? payload.new.status
+                      : prev.status,
                   mobile_number:
                     typeof payload.new.mobile_number === "string" || payload.new.mobile_number === null
                       ? payload.new.mobile_number
@@ -260,6 +280,32 @@ export default function OrderTrackingPage() {
     setSubmittingRating(false);
   };
 
+  const handleCancelOrder = async () => {
+    if (!order) {
+      return;
+    }
+
+    setCancelling(true);
+    setCancelError(null);
+
+    const { data, error } = await supabase.rpc("cancel_order_before_cutoff", {
+      p_order_id: order.id,
+    });
+
+    if (error) {
+      setCancelError(
+        error.message === "CANCELLATION_WINDOW_CLOSED"
+          ? "This batch is already locked. Morning orders close at 7:59 AM IST and Evening orders close at 2:59 PM IST."
+          : error.message.replaceAll("_", " "),
+      );
+      setCancelling(false);
+      return;
+    }
+
+    setOrder((prev) => (prev ? { ...prev, ...data } : prev));
+    setCancelling(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-[calc(100svh-5rem)] bg-[var(--background)] px-4 py-14 sm:px-6 lg:px-8">
@@ -304,6 +350,12 @@ export default function OrderTrackingPage() {
     steps.findIndex((step) => step.status === order.delivery_status),
     0,
   );
+  const isCancelled =
+    order.status === "cancelled" || order.delivery_status === "cancelled";
+  const canCancel =
+    !isCancelled &&
+    order.delivery_status !== "out_for_delivery" &&
+    order.delivery_status !== "delivered";
 
   return (
     <div className="min-h-[calc(100svh-5rem)] bg-[var(--background)] px-4 py-14 sm:px-6 lg:px-8">
@@ -324,21 +376,42 @@ export default function OrderTrackingPage() {
                 Track the grocery run in real time.
               </h1>
               <p className="mt-4 max-w-xl text-sm leading-6 text-[var(--forest-700)] sm:text-base">
-                {steps[currentStepIndex].description}
+                {isCancelled
+                  ? "This order was cancelled before the delivery batch closed."
+                  : steps[currentStepIndex].description}
               </p>
             </div>
 
-            {order.delivery_status === "out_for_delivery" && order.delivery_pin && (
-              <div className="rounded-[2rem] bg-[linear-gradient(135deg,rgba(255,216,77,0.96)_0%,rgba(242,106,46,0.88)_100%)] px-6 py-5 text-center text-[var(--forest-950)] shadow-[0_18px_35px_rgba(242,106,46,0.16)]">
-                <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em]">
-                  Delivery pin
-                </p>
-                <p className="mt-2 text-3xl font-semibold tracking-[0.18em]">
-                  {order.delivery_pin}
-                </p>
-              </div>
-            )}
+            <div className="space-y-3">
+              {order.delivery_status === "out_for_delivery" && order.delivery_pin && (
+                <div className="rounded-[2rem] bg-[linear-gradient(135deg,rgba(255,216,77,0.96)_0%,rgba(242,106,46,0.88)_100%)] px-6 py-5 text-center text-[var(--forest-950)] shadow-[0_18px_35px_rgba(242,106,46,0.16)]">
+                  <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em]">
+                    Delivery pin
+                  </p>
+                  <p className="mt-2 text-3xl font-semibold tracking-[0.18em]">
+                    {order.delivery_pin}
+                  </p>
+                </div>
+              )}
+
+              {canCancel && (
+                <button
+                  type="button"
+                  onClick={handleCancelOrder}
+                  disabled={cancelling}
+                  className="inline-flex min-h-12 items-center justify-center rounded-full border border-[var(--line-soft)] bg-white px-5 text-sm font-semibold text-[var(--forest-950)]"
+                >
+                  {cancelling ? "Cancelling..." : "Cancel before batch cut-off"}
+                </button>
+              )}
+            </div>
           </div>
+
+          {cancelError && (
+            <div className="mt-6 rounded-[1.5rem] border border-[var(--line-soft)] bg-[rgba(242,106,46,0.08)] px-4 py-3 text-sm text-[var(--forest-950)]">
+              {cancelError}
+            </div>
+          )}
 
           <div className="mt-10 grid gap-4 sm:grid-cols-4">
             {steps.map((step, index) => {
@@ -460,6 +533,26 @@ export default function OrderTrackingPage() {
                 </p>
               </div>
             )}
+
+            <div className="rounded-[2.5rem] border border-[var(--line-soft)] bg-white/78 p-6 shadow-[0_24px_55px_rgba(33,55,47,0.06)]">
+              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-[var(--accent-deep)]">
+                Delivery batch
+              </p>
+              <div className="mt-4 text-sm leading-6 text-[var(--forest-700)]">
+                <p className="font-semibold text-[var(--forest-950)]">
+                  {order.delivery_batch || "Batch pending"}
+                </p>
+                <p>
+                  {order.delivery_batch_date
+                    ? new Date(order.delivery_batch_date).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })
+                    : "Date pending"}
+                </p>
+              </div>
+            </div>
 
             <div className="rounded-[2.5rem] border border-[var(--line-soft)] bg-white/78 p-6 shadow-[0_24px_55px_rgba(33,55,47,0.06)]">
               <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-[var(--accent-deep)]">

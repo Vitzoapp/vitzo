@@ -296,7 +296,10 @@ export interface Database {
       orders: {
         Row: {
           agent_id: string | null;
+          assigned_agent_id: string | null;
           created_at: string | null;
+          delivery_batch: string | null;
+          delivery_batch_date: string | null;
           delivery_pin: string | null;
           delivery_status: string | null;
           final_amount_due: number;
@@ -316,7 +319,10 @@ export interface Database {
         };
         Insert: {
           agent_id?: string | null;
+          assigned_agent_id?: string | null;
           created_at?: string | null;
+          delivery_batch?: string | null;
+          delivery_batch_date?: string | null;
           delivery_pin?: string | null;
           delivery_status?: string | null;
           final_amount_due?: number;
@@ -336,7 +342,10 @@ export interface Database {
         };
         Update: {
           agent_id?: string | null;
+          assigned_agent_id?: string | null;
           created_at?: string | null;
+          delivery_batch?: string | null;
+          delivery_batch_date?: string | null;
           delivery_pin?: string | null;
           delivery_status?: string | null;
           final_amount_due?: number;
@@ -413,39 +422,51 @@ export interface Database {
       };
       profiles: {
         Row: {
+          address: string | null;
           area: string | null;
+          city: string | null;
           created_at: string | null;
           full_name: string | null;
           house_no: string | null;
           id: string;
           landmark: string | null;
           mobile_number: string | null;
+          phone_number: string | null;
+          pincode: string | null;
           referral_code: string | null;
           role: string | null;
           street: string | null;
           updated_at: string | null;
         };
         Insert: {
+          address?: string | null;
           area?: string | null;
+          city?: string | null;
           created_at?: string | null;
           full_name?: string | null;
           house_no?: string | null;
           id: string;
           landmark?: string | null;
           mobile_number?: string | null;
+          phone_number?: string | null;
+          pincode?: string | null;
           referral_code?: string | null;
           role?: string | null;
           street?: string | null;
           updated_at?: string | null;
         };
         Update: {
+          address?: string | null;
           area?: string | null;
+          city?: string | null;
           created_at?: string | null;
           full_name?: string | null;
           house_no?: string | null;
           id?: string;
           landmark?: string | null;
           mobile_number?: string | null;
+          phone_number?: string | null;
+          pincode?: string | null;
           referral_code?: string | null;
           role?: string | null;
           street?: string | null;
@@ -473,6 +494,29 @@ export interface Database {
       };
     };
     Functions: {
+      cancel_order_before_cutoff: {
+        Args: {
+          p_order_id: string;
+        };
+        Returns: Database["public"]["Tables"]["orders"]["Row"];
+      };
+      get_current_batch_snapshot: {
+        Args: Record<string, never>;
+        Returns: {
+          active_orders: number;
+          batch_date: string;
+          delivery_batch: string;
+        }[];
+      };
+      get_referrer_preview: {
+        Args: {
+          p_referral_code: string;
+        };
+        Returns: {
+          first_name: string | null;
+          full_name: string | null;
+        }[];
+      };
       get_total_delivered_profit: {
         Args: Record<string, never>;
         Returns: number;

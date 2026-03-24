@@ -9,9 +9,12 @@ import {
   MapPin,
   Phone,
   Save,
+  Share2,
   User as UserIcon,
   Wallet,
+  MessageCircle,
 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 const ALLOWED_AREAS = ["Ramanattukara", "Azhinjilam", "Farook College"];
@@ -23,14 +26,13 @@ const currencyFormatter = new Intl.NumberFormat("en-IN", {
 });
 
 interface Profile {
+  address: string | null;
   id: string;
+  city: string | null;
   full_name: string | null;
-  mobile_number: string | null;
-  house_no: string | null;
-  street: string | null;
-  landmark: string | null;
-  area: string | null;
+  phone_number: string | null;
   referral_code: string | null;
+  pincode: string | null;
 }
 
 interface WalletAccount {
@@ -56,6 +58,8 @@ interface WalletTransaction {
 }
 
 export default function ProfilePage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [wallet, setWallet] = useState<WalletAccount | null>(null);
   const [referrals, setReferrals] = useState<Referral[]>([]);
@@ -65,11 +69,15 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
+  const [canNativeShare, setCanNativeShare] = useState(false);
   const [origin, setOrigin] = useState("");
+  const onboarding = searchParams.get("onboarding") === "1";
+  const nextPath = searchParams.get("next") || "/";
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setOrigin(window.location.origin);
+      setCanNativeShare(typeof navigator.share === "function");
     }
 
     const fetchProfile = async () => {
@@ -101,14 +109,13 @@ export default function ProfilePage() {
         setProfile(profileRes.data);
       } else {
         setProfile({
+          address: "",
+          city: "Kozhikode",
           id: session.user.id,
           full_name: session.user.user_metadata?.full_name || "",
-          mobile_number: "",
-          house_no: "",
-          street: "",
-          landmark: "",
-          area: "",
+          phone_number: "",
           referral_code: null,
+          pincode: "",
         });
       }
 
@@ -137,20 +144,21 @@ export default function ProfilePage() {
       return;
     }
 
-    if (profile.area && !ALLOWED_AREAS.includes(profile.area)) {
+    if (profile.city && !ALLOWED_AREAS.includes(profile.city)) {
       setError(`Sorry, we currently only deliver to: ${ALLOWED_AREAS.join(", ")}`);
       setSaving(false);
       return;
     }
 
     const { error: saveError } = await supabase.from("profiles").upsert({
+      address: profile.address,
+      area: profile.city,
+      city: profile.city,
       id: profile.id,
       full_name: profile.full_name,
-      mobile_number: profile.mobile_number,
-      house_no: profile.house_no,
-      street: profile.street,
-      landmark: profile.landmark,
-      area: profile.area,
+      mobile_number: profile.phone_number,
+      phone_number: profile.phone_number,
+      pincode: profile.pincode,
       updated_at: new Date().toISOString(),
     });
 
@@ -162,6 +170,11 @@ export default function ProfilePage() {
 
     setMessage("Profile updated successfully.");
     setSaving(false);
+
+    if (onboarding) {
+      router.push(nextPath);
+      router.refresh();
+    }
   };
 
   const handleCopyReferral = async () => {
@@ -169,11 +182,32 @@ export default function ProfilePage() {
       return;
     }
 
-    const referralLink = `${origin}/?ref=${encodeURIComponent(profile.referral_code)}`;
+    const referralLink = `${origin}/invite/${encodeURIComponent(profile.referral_code)}`;
     await navigator.clipboard.writeText(referralLink);
     setCopyMessage("Referral link copied.");
     window.setTimeout(() => setCopyMessage(null), 2200);
   };
+
+  const handleNativeShare = async () => {
+    if (!profile?.referral_code || !origin || !navigator.share) {
+      return;
+    }
+
+    const url = `${origin}/invite/${encodeURIComponent(profile.referral_code)}`;
+    await navigator.share({
+      title: "Join me on Vitzo",
+      text: "Use my Vitzo invite link and start your next grocery batch.",
+      url,
+    });
+  };
+
+  const shareUrl =
+    origin && profile?.referral_code
+      ? `${origin}/invite/${encodeURIComponent(profile.referral_code)}`
+      : "";
+  const whatsappShareUrl = shareUrl
+    ? `https://wa.me/?text=${encodeURIComponent(`Join me on Vitzo: ${shareUrl}`)}`
+    : "#";
 
   if (loading) {
     return (
@@ -192,6 +226,20 @@ export default function ProfilePage() {
   return (
     <div className="min-h-[calc(100svh-5rem)] bg-[var(--background)] px-4 py-14 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-8">
+        {onboarding && (
+          <section className="rounded-[2.4rem] border border-[rgba(125,207,89,0.26)] bg-[rgba(125,207,89,0.12)] px-6 py-5 text-[var(--forest-950)]">
+            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-[var(--accent-deep)]">
+              Complete setup
+            </p>
+            <h1 className="mt-2 font-body text-3xl font-semibold tracking-[-0.04em]">
+              Add your delivery details before your first order.
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--forest-700)]">
+              We need one clean address, your city, pincode, and phone number so checkout and agent routing work properly.
+            </p>
+          </section>
+        )}
+
         <section className="overflow-hidden rounded-[2.9rem] bg-[linear-gradient(135deg,rgba(255,216,77,0.96)_0%,rgba(242,106,46,0.88)_55%,rgba(24,49,40,0.95)_100%)] px-8 py-10 text-white shadow-[0_30px_70px_rgba(242,106,46,0.18)] sm:px-10">
           <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
@@ -266,9 +314,30 @@ export default function ProfilePage() {
                 </div>
                 {origin && profile?.referral_code && (
                   <p className="mt-4 break-all text-sm text-[var(--forest-700)]">
-                    {origin}/?ref={profile.referral_code}
+                    {origin}/invite/{profile.referral_code}
                   </p>
                 )}
+                <div className="mt-4 flex flex-wrap gap-3">
+                  {canNativeShare && (
+                    <button
+                      type="button"
+                      onClick={handleNativeShare}
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-[var(--line-soft)] bg-white px-4 text-sm font-semibold text-[var(--forest-950)]"
+                    >
+                      <Share2 className="h-4 w-4" />
+                      Share
+                    </button>
+                  )}
+                  <a
+                    href={whatsappShareUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-[var(--line-soft)] bg-white px-4 text-sm font-semibold text-[var(--forest-950)]"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    WhatsApp
+                  </a>
+                </div>
                 {copyMessage && (
                   <p className="mt-3 text-sm font-semibold text-[var(--accent-deep)]">
                     {copyMessage}
@@ -413,10 +482,10 @@ export default function ProfilePage() {
                 <Field label="Mobile number" icon={Phone}>
                   <input
                     type="tel"
-                    value={profile?.mobile_number || ""}
+                    value={profile?.phone_number || ""}
                     onChange={(event) =>
                       setProfile((prev) =>
-                        prev ? { ...prev, mobile_number: event.target.value } : null,
+                        prev ? { ...prev, phone_number: event.target.value } : null,
                       )
                     }
                     className="w-full rounded-[1.25rem] border border-[var(--line-soft)] bg-[var(--surface-soft)] px-4 py-4 text-sm text-[var(--forest-950)] outline-none focus:border-[var(--accent-deep)]"
@@ -426,18 +495,18 @@ export default function ProfilePage() {
                 </Field>
               </div>
 
-              <Field label="Delivery area" icon={MapPin}>
+              <Field label="City" icon={MapPin}>
                 <select
-                  value={profile?.area || ""}
+                  value={profile?.city || ""}
                   onChange={(event) =>
                     setProfile((prev) =>
-                      prev ? { ...prev, area: event.target.value } : null,
+                      prev ? { ...prev, city: event.target.value } : null,
                     )
                   }
                   className="w-full rounded-[1.25rem] border border-[var(--line-soft)] bg-[var(--surface-soft)] px-4 py-4 text-sm text-[var(--forest-950)] outline-none focus:border-[var(--accent-deep)]"
                   required
                 >
-                  <option value="">Select area</option>
+                  <option value="">Select city</option>
                   {ALLOWED_AREAS.map((area) => (
                     <option key={area} value={area}>
                       {area}
@@ -447,49 +516,32 @@ export default function ProfilePage() {
                 </select>
               </Field>
 
-              <div className="grid gap-5 sm:grid-cols-2">
-                <Field label="House no / name" icon={MapPin}>
-                  <input
-                    type="text"
-                    value={profile?.house_no || ""}
-                    onChange={(event) =>
-                      setProfile((prev) =>
-                        prev ? { ...prev, house_no: event.target.value } : null,
-                      )
-                    }
-                    className="w-full rounded-[1.25rem] border border-[var(--line-soft)] bg-[var(--surface-soft)] px-4 py-4 text-sm text-[var(--forest-950)] outline-none focus:border-[var(--accent-deep)]"
-                    placeholder="Flat 4B"
-                    required
-                  />
-                </Field>
-
-                <Field label="Road / street" icon={MapPin}>
-                  <input
-                    type="text"
-                    value={profile?.street || ""}
-                    onChange={(event) =>
-                      setProfile((prev) =>
-                        prev ? { ...prev, street: event.target.value } : null,
-                      )
-                    }
-                    className="w-full rounded-[1.25rem] border border-[var(--line-soft)] bg-[var(--surface-soft)] px-4 py-4 text-sm text-[var(--forest-950)] outline-none focus:border-[var(--accent-deep)]"
-                    placeholder="Street name"
-                    required
-                  />
-                </Field>
-              </div>
-
-              <Field label="Landmark" icon={MapPin}>
+              <Field label="Delivery address" icon={MapPin}>
                 <input
                   type="text"
-                  value={profile?.landmark || ""}
+                  value={profile?.address || ""}
                   onChange={(event) =>
                     setProfile((prev) =>
-                      prev ? { ...prev, landmark: event.target.value } : null,
+                      prev ? { ...prev, address: event.target.value } : null,
                     )
                   }
                   className="w-full rounded-[1.25rem] border border-[var(--line-soft)] bg-[var(--surface-soft)] px-4 py-4 text-sm text-[var(--forest-950)] outline-none focus:border-[var(--accent-deep)]"
-                  placeholder="Near landmark"
+                  placeholder="House name, road, landmark"
+                  required
+                />
+              </Field>
+
+              <Field label="Pincode" icon={MapPin}>
+                <input
+                  type="text"
+                  value={profile?.pincode || ""}
+                  onChange={(event) =>
+                    setProfile((prev) =>
+                      prev ? { ...prev, pincode: event.target.value } : null,
+                    )
+                  }
+                  className="w-full rounded-[1.25rem] border border-[var(--line-soft)] bg-[var(--surface-soft)] px-4 py-4 text-sm text-[var(--forest-950)] outline-none focus:border-[var(--accent-deep)]"
+                  placeholder="673632"
                   required
                 />
               </Field>

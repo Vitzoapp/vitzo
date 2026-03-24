@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 interface Order {
   id: string;
   created_at: string | null;
+  delivery_batch: string | null;
   total_amount: number;
   status: string | null;
   delivery_status: string | null;
@@ -47,6 +48,7 @@ export default function OrdersPage() {
         .select(
           `
           *,
+          delivery_batch,
           order_items (
             *,
             products (name, image_url)
@@ -107,6 +109,7 @@ export default function OrdersPage() {
           <div className="space-y-5 pt-10">
             {orders.map((order) => {
               const delivered = order.delivery_status === "delivered";
+              const cancelled = order.status === "cancelled" || order.delivery_status === "cancelled";
 
               return (
                 <Link
@@ -132,6 +135,7 @@ export default function OrdersPage() {
                           {order.order_items.length === 1 ? "item" : "items"}
                         </h2>
                         <p className="mt-2 text-sm text-[var(--forest-700)]">
+                          {order.delivery_batch ? `${order.delivery_batch} Batch • ` : ""}
                           {order.created_at
                             ? new Date(order.created_at).toLocaleDateString("en-IN", {
                                 day: "numeric",
@@ -148,7 +152,7 @@ export default function OrdersPage() {
                     <div className="flex items-center justify-between gap-5 border-t border-[var(--line-soft)] pt-5 sm:border-t-0 sm:pt-0">
                       <div className="text-right">
                         <p className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[var(--accent-deep)]">
-                          {delivered ? "Delivered" : order.delivery_status || "Processing"}
+                          {cancelled ? "Cancelled" : delivered ? "Delivered" : order.delivery_status || "Processing"}
                         </p>
                         <p className="mt-2 text-xl font-semibold text-[var(--forest-950)]">
                           {currencyFormatter.format(order.total_amount)}
