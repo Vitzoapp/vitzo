@@ -1,50 +1,25 @@
 -- VITZO UNIFIED DATABASE SCHEMA (PRODUCTION-READY)
--- Run this in your Supabase SQL Editor to RESET and INITIALIZE the database.
-
--- 0. CLEANUP (WARNING: This will delete all existing data)
-DROP TRIGGER IF EXISTS tr_auto_assign_order ON orders;
-DROP TRIGGER IF EXISTS tr_generate_pin ON orders;
-DROP TRIGGER IF EXISTS tr_update_agent_orders ON orders;
-DROP TRIGGER IF EXISTS tr_update_agent_rating ON agent_ratings;
-DROP TRIGGER IF EXISTS tr_process_referral_reward ON orders;
-
-DROP FUNCTION IF EXISTS auto_assign_order_to_agent CASCADE;
-DROP FUNCTION IF EXISTS process_checkout CASCADE;
-DROP FUNCTION IF EXISTS process_referral_reward CASCADE;
-DROP FUNCTION IF EXISTS register_referral CASCADE;
-DROP FUNCTION IF EXISTS verify_delivery_pin CASCADE;
-DROP FUNCTION IF EXISTS generate_delivery_pin CASCADE;
-DROP FUNCTION IF EXISTS update_agent_stats CASCADE;
-DROP FUNCTION IF EXISTS is_admin CASCADE;
-
-DROP TABLE IF EXISTS agent_ratings CASCADE;
-DROP TABLE IF EXISTS order_items CASCADE;
-DROP TABLE IF EXISTS orders CASCADE;
-DROP TABLE IF EXISTS agents CASCADE;
-DROP TABLE IF EXISTS wallet_transactions CASCADE;
-DROP TABLE IF EXISTS referrals CASCADE;
-DROP TABLE IF EXISTS wallets CASCADE;
-DROP TABLE IF EXISTS profiles CASCADE;
-DROP TABLE IF EXISTS products CASCADE;
-DROP TABLE IF EXISTS categories CASCADE;
+-- Run this in your Supabase SQL Editor to initialize a fresh project.
 
 -- 1. BASE EXTENSIONS
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- 2. TABLES
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     slug TEXT UNIQUE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     real_price DECIMAL(10,2) NOT NULL,
     commission DECIMAL(10,2) NOT NULL DEFAULT 0,
     final_price DECIMAL(10,2) GENERATED ALWAYS AS (real_price + commission) STORED,
+    unit_type TEXT NOT NULL DEFAULT 'weight' CHECK (unit_type IN ('weight', 'volume', 'discrete')),
+    allowed_units JSONB NOT NULL DEFAULT '["g","kg"]'::jsonb CHECK (jsonb_typeof(allowed_units) = 'array'),
     category_id UUID REFERENCES categories(id),
     image_url TEXT,
     description TEXT,
@@ -52,7 +27,7 @@ CREATE TABLE products (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id),
     full_name TEXT,
     mobile_number TEXT,
@@ -66,14 +41,14 @@ CREATE TABLE profiles (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE wallets (
+CREATE TABLE IF NOT EXISTS wallets (
     user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     balance DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (balance >= 0),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE referrals (
+CREATE TABLE IF NOT EXISTS referrals (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     referrer_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     referred_id UUID NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -86,7 +61,7 @@ CREATE TABLE referrals (
     CONSTRAINT referrals_no_self_referral CHECK (referrer_id <> referred_id)
 );
 
-CREATE TABLE agents (
+CREATE TABLE IF NOT EXISTS agents (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES auth.users(id) UNIQUE,
     full_name TEXT NOT NULL,
@@ -102,7 +77,7 @@ CREATE TABLE agents (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES auth.users(id),
     agent_id UUID REFERENCES agents(id),
@@ -124,10 +99,13 @@ CREATE TABLE orders (
 );
 
 ALTER TABLE referrals
+    DROP CONSTRAINT IF EXISTS referrals_reward_order_id_fkey;
+
+ALTER TABLE referrals
     ADD CONSTRAINT referrals_reward_order_id_fkey
     FOREIGN KEY (reward_order_id) REFERENCES orders(id) ON DELETE SET NULL;
 
-CREATE TABLE order_items (
+CREATE TABLE IF NOT EXISTS order_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
     product_id UUID REFERENCES products(id),
@@ -140,7 +118,7 @@ CREATE TABLE order_items (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE wallet_transactions (
+CREATE TABLE IF NOT EXISTS wallet_transactions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     wallet_user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     amount DECIMAL(10,2) NOT NULL CHECK (amount > 0),
@@ -152,7 +130,7 @@ CREATE TABLE wallet_transactions (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE agent_ratings (
+CREATE TABLE IF NOT EXISTS agent_ratings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     order_id UUID REFERENCES orders(id) UNIQUE,
     agent_id UUID REFERENCES agents(id),
@@ -173,7 +151,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE OR REPLACE VIEW product_catalog AS
+DROP VIEW IF EXISTS product_catalog;
+CREATE VIEW product_catalog AS
 SELECT
     p.id,
     p.name,
@@ -184,6 +163,8 @@ SELECT
     p.created_at,
     p.final_price AS price,
     p.final_price,
+    p.unit_type,
+    p.allowed_units,
     c.name AS category_name,
     c.slug AS category_slug
 FROM products p
@@ -204,27 +185,37 @@ ALTER TABLE agents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agent_ratings ENABLE ROW LEVEL SECURITY;
 
 -- 5. RLS POLICIES
+DROP POLICY IF EXISTS "Public Read Categories" ON categories;
 CREATE POLICY "Public Read Categories" ON categories FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Users view their own profiles" ON profiles;
 CREATE POLICY "Users view their own profiles" ON profiles FOR SELECT TO authenticated USING (auth.uid() = id OR is_admin());
+DROP POLICY IF EXISTS "Users update their own profiles" ON profiles;
 CREATE POLICY "Users update their own profiles" ON profiles FOR UPDATE TO authenticated USING (auth.uid() = id);
+DROP POLICY IF EXISTS "Users insert their own profiles" ON profiles;
 CREATE POLICY "Users insert their own profiles" ON profiles FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users view own wallet" ON wallets;
 CREATE POLICY "Users view own wallet" ON wallets FOR SELECT TO authenticated USING (auth.uid() = user_id OR is_admin());
+DROP POLICY IF EXISTS "Users view own referrals" ON referrals;
 CREATE POLICY "Users view own referrals" ON referrals FOR SELECT TO authenticated USING (auth.uid() = referrer_id OR auth.uid() = referred_id OR is_admin());
+DROP POLICY IF EXISTS "Users view own wallet transactions" ON wallet_transactions;
 CREATE POLICY "Users view own wallet transactions" ON wallet_transactions FOR SELECT TO authenticated USING (auth.uid() = wallet_user_id OR is_admin());
 
+DROP POLICY IF EXISTS "Users view their own orders" ON orders;
 CREATE POLICY "Users view their own orders" ON orders FOR SELECT TO authenticated USING (
     auth.uid() = user_id OR 
     agent_id IN (SELECT id FROM agents WHERE user_id = auth.uid()) OR
     is_admin()
 );
 
+DROP POLICY IF EXISTS "Agents update assigned orders" ON orders;
 CREATE POLICY "Agents update assigned orders" ON orders 
 FOR UPDATE TO authenticated 
 USING (agent_id IN (SELECT id FROM agents WHERE user_id = auth.uid())) 
 WITH CHECK (agent_id IN (SELECT id FROM agents WHERE user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "Users view their own order items" ON order_items;
 CREATE POLICY "Users view their own order items" ON order_items FOR SELECT TO authenticated USING (
     EXISTS (
         SELECT 1 FROM orders 
@@ -236,14 +227,20 @@ CREATE POLICY "Users view their own order items" ON order_items FOR SELECT TO au
     ) OR is_admin()
 );
 
+DROP POLICY IF EXISTS "Agents view own" ON agents;
 CREATE POLICY "Agents view own" ON agents FOR SELECT TO authenticated USING (auth.uid() = user_id OR is_admin());
+DROP POLICY IF EXISTS "Agents update own status" ON agents;
 CREATE POLICY "Agents update own status" ON agents FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users insert own agent application" ON agents;
 CREATE POLICY "Users insert own agent application" ON agents FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Public view agent stats" ON agents;
 CREATE POLICY "Public view agent stats" ON agents FOR SELECT USING (status = 'approved');
 
+DROP POLICY IF EXISTS "Users insert agent ratings" ON agent_ratings;
 CREATE POLICY "Users insert agent ratings" ON agent_ratings FOR INSERT TO authenticated WITH CHECK (
     EXISTS (SELECT 1 FROM orders WHERE orders.id = agent_ratings.order_id AND orders.user_id = auth.uid())
 );
+DROP POLICY IF EXISTS "Agents view their ratings" ON agent_ratings;
 CREATE POLICY "Agents view their ratings" ON agent_ratings FOR SELECT TO authenticated USING (
     EXISTS (SELECT 1 FROM agents WHERE agents.id = agent_ratings.agent_id AND agents.user_id = auth.uid())
 );
@@ -255,6 +252,7 @@ DECLARE
 BEGIN
     FOR tbl IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename IN ('categories', 'products', 'orders', 'order_items', 'profiles', 'agents', 'agent_ratings', 'wallets', 'referrals', 'wallet_transactions'))
     LOOP
+        EXECUTE format('DROP POLICY IF EXISTS "Admin full access on %I" ON %I', tbl.tablename, tbl.tablename);
         EXECUTE format('CREATE POLICY "Admin full access on %I" ON %I FOR ALL TO authenticated USING (is_admin())', tbl.tablename, tbl.tablename);
     END LOOP;
 END $$;
@@ -284,7 +282,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS tr_update_agent_rating ON agent_ratings;
 CREATE TRIGGER tr_update_agent_rating AFTER INSERT ON agent_ratings FOR EACH ROW EXECUTE FUNCTION update_agent_stats();
+DROP TRIGGER IF EXISTS tr_update_agent_orders ON orders;
 CREATE TRIGGER tr_update_agent_orders AFTER UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION update_agent_stats();
 
 CREATE OR REPLACE FUNCTION generate_delivery_pin()
@@ -297,6 +297,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS tr_generate_pin ON orders;
 CREATE TRIGGER tr_generate_pin BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION generate_delivery_pin();
 
 CREATE OR REPLACE FUNCTION verify_delivery_pin(p_order_id UUID, p_entered_pin TEXT)
@@ -658,7 +659,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS tr_auto_assign_order ON orders;
 CREATE TRIGGER tr_auto_assign_order BEFORE INSERT OR UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION auto_assign_order_to_agent();
+DROP TRIGGER IF EXISTS tr_process_referral_reward ON orders;
 CREATE TRIGGER tr_process_referral_reward AFTER UPDATE OF delivery_status ON orders FOR EACH ROW EXECUTE FUNCTION process_referral_reward();
 
 -- 9. SEEDING
