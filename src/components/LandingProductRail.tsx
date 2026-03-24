@@ -2,8 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Plus } from "lucide-react";
-import { useCart } from "@/context/CartContext";
+import { ArrowRight } from "lucide-react";
 
 interface ProductRailItem {
   id: string;
@@ -33,8 +32,6 @@ export default function LandingProductRail({
   href,
   products,
 }: LandingProductRailProps) {
-  const { cart, addToCart } = useCart();
-
   return (
     <article className="border-t border-[var(--line-soft)] pt-8 first:border-t-0 first:pt-0">
       <div className="mb-6 flex items-end justify-between gap-4">
@@ -58,9 +55,6 @@ export default function LandingProductRail({
       <div className="no-scrollbar overflow-x-auto pb-2">
         <ul className="flex snap-x snap-mandatory gap-5 pr-4 lg:grid lg:grid-cols-4 lg:gap-8">
           {products.map((product) => {
-            const quantity =
-              cart.find((item) => item.id === product.id)?.quantity ?? 0;
-
             return (
               <li
                 key={product.id}
@@ -90,31 +84,20 @@ export default function LandingProductRail({
                     </Link>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      addToCart({
-                        id: product.id,
-                        name: product.name,
-                        price: product.price,
-                        image: product.image || FALLBACK_IMAGE,
-                        category: product.category,
-                      })
-                    }
+                  <Link
+                    href={`/products/${product.id}`}
                     className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--line-soft)] bg-white/85 text-[var(--forest-950)] transition-all duration-300 hover:border-[var(--accent-deep)] hover:bg-[var(--accent)]"
-                    aria-label={`Add ${product.name} to cart`}
+                    aria-label={`Open ${product.name}`}
                   >
-                    <Plus className="h-4 w-4" />
-                  </button>
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
                 </div>
 
                 <div className="mt-3 flex items-center justify-between text-sm">
                   <span className="font-semibold text-[var(--forest-950)]">
-                    {currencyFormatter.format(product.price)}
+                    {currencyFormatter.format(product.price)} / kg
                   </span>
-                  <span className="text-[var(--forest-700)]">
-                    {quantity > 0 ? `${quantity} in bag` : "Add to bag"}
-                  </span>
+                  <span className="text-[var(--forest-700)]">Choose weight</span>
                 </div>
               </li>
             );

@@ -13,6 +13,7 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/";
   const authError = searchParams.get("error");
+  const referralCode = searchParams.get("ref");
   const [origin, setOrigin] = useState("");
 
   useEffect(() => {
@@ -75,6 +76,12 @@ function LoginContent() {
               Sign in with email or Google and we&apos;ll send you back to the page you were already shopping from.
             </p>
 
+            {referralCode && (
+              <div className="mt-6 rounded-[1.5rem] border border-[rgba(125,207,89,0.28)] bg-[rgba(125,207,89,0.12)] px-4 py-4 text-sm text-[var(--forest-950)]">
+                Referral code <span className="font-semibold">{referralCode}</span> will be linked to this account after sign-up.
+              </div>
+            )}
+
             {authError && (
               <div className="mt-6 rounded-[1.5rem] border border-[var(--line-soft)] bg-[rgba(242,106,46,0.08)] px-4 py-4 text-sm text-[var(--forest-950)]">
                 {authError}
@@ -121,7 +128,7 @@ function LoginContent() {
                 providers={["google"]}
                 redirectTo={
                   origin
-                    ? `${origin}/auth/callback?next=${encodeURIComponent(next)}`
+                    ? `${origin}/auth/callback?next=${encodeURIComponent(next)}${referralCode ? `&ref=${encodeURIComponent(referralCode)}` : ""}`
                     : ""
                 }
               />

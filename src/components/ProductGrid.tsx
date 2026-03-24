@@ -11,7 +11,8 @@ interface Product {
   price: number;
   image_url: string | null;
   category_id?: string | null;
-  categories?: { name: string; slug: string } | null;
+  category_name: string | null;
+  category_slug: string | null;
 }
 
 interface ProductGridProps {
@@ -31,7 +32,7 @@ export default function ProductGrid({
     if (!initialProducts) {
       const fetchProducts = async () => {
         setLoading(true);
-        let query = supabase.from("products").select("*, categories(name, slug)");
+        let query = supabase.from("product_catalog").select("*");
 
         if (categoryId) {
           query = query.eq("category_id", categoryId);
@@ -92,7 +93,7 @@ export default function ProductGrid({
             product.image_url ??
             "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=800"
           }
-          category={product.categories?.name || "Uncategorized"}
+          category={product.category_name || "Uncategorized"}
         />
       ))}
     </div>

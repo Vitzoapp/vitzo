@@ -5,25 +5,24 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  Minus,
-  Plus,
   ShieldCheck,
-  ShoppingBag,
   Truck,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { useCart } from "@/context/CartContext";
 import type { Json } from "@/lib/database.types";
+import WeightSelector from "@/components/WeightSelector";
 
 interface Product {
   id: string;
   name: string;
   price: number;
+  final_price: number;
   image_url: string | null;
   description?: string | null;
   specifications?: Json | null;
   category_id?: string | null;
-  categories?: { name: string; slug: string } | null;
+  category_name: string | null;
+  category_slug: string | null;
 }
 
 const FALLBACK_IMAGE =
@@ -54,14 +53,13 @@ export default function ProductPage() {
   const router = useRouter();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const { cart, addToCart, updateQuantity, removeFromCart } = useCart();
 
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
       const { data } = await supabase
-        .from("products")
-        .select("*, categories(name, slug)")
+        .from("product_catalog")
+        .select("*")
         .eq("id", id)
         .single();
 
@@ -112,28 +110,7 @@ export default function ProductPage() {
     );
   }
 
-  const cartItem = cart.find((item) => item.id === product.id);
-  const quantity = cartItem?.quantity || 0;
   const image = product.image_url || FALLBACK_IMAGE;
-
-  const handleAdd = () => {
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image,
-      category: product.categories?.name || "Fresh pick",
-    });
-  };
-
-  const handleDecrement = () => {
-    if (quantity === 1) {
-      removeFromCart(product.id);
-      return;
-    }
-
-    updateQuantity(product.id, quantity - 1);
-  };
 
   return (
     <div className="min-h-[calc(100svh-5rem)] bg-[var(--background)]">
@@ -159,13 +136,13 @@ export default function ProductPage() {
 
           <div>
             <p className="vitzo-kicker">
-              {product.categories?.name || "Fresh selection"}
+              {product.category_name || "Fresh selection"}
             </p>
             <h1 className="mt-3 max-w-xl font-body text-[clamp(2.5rem,5vw,4.5rem)] font-semibold leading-[0.92] tracking-[-0.05em] text-[var(--forest-950)]">
               {product.name}
             </h1>
             <p className="mt-4 text-2xl font-semibold text-[var(--forest-950)] sm:text-3xl">
-              {currencyFormatter.format(product.price)}
+              {currencyFormatter.format(product.price)} / kg
             </p>
             <p className="mt-6 max-w-xl text-sm leading-7 text-[var(--forest-700)] sm:text-base">
               {product.description ||
@@ -189,45 +166,14 @@ export default function ProductPage() {
               ))}
             </div>
 
-            <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-              {quantity > 0 ? (
-                <div className="flex min-h-14 flex-1 items-center justify-between rounded-full border border-[var(--line-soft)] bg-white/78 px-3">
-                  <button
-                    type="button"
-                    onClick={handleDecrement}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full text-[var(--forest-950)] hover:bg-[var(--surface-soft)]"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </button>
-                  <span className="text-lg font-semibold text-[var(--forest-950)]">
-                    {quantity}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => updateQuantity(product.id, quantity + 1)}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--forest-950)] text-white"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleAdd}
-                  className="inline-flex min-h-14 flex-1 items-center justify-center gap-2 rounded-full bg-[var(--accent-deep)] px-6 text-sm font-semibold text-white shadow-[0_18px_35px_rgba(242,106,46,0.2)]"
-                >
-                  <ShoppingBag className="h-4 w-4" />
-                  Add to bag
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={handleAdd}
-                className="inline-flex min-h-14 flex-1 items-center justify-center rounded-full border border-[var(--forest-950)]/12 bg-white/56 px-6 text-sm font-semibold text-[var(--forest-950)]"
-              >
-                Buy for the next drop
-              </button>
+            <div className="mt-10">
+              <WeightSelector
+                productId={product.id}
+                productName={product.name}
+                category={product.category_name || "Fresh pick"}
+                image={image}
+                pricePerKg={product.price}
+              />
             </div>
 
             {product.specifications &&

@@ -14,9 +14,10 @@ interface Product {
   id: string;
   name: string;
   price: number;
-  image_url: string;
-  category_id: string;
-  categories?: { name: string; slug: string };
+  image_url: string | null;
+  category_id: string | null;
+  category_name: string | null;
+  category_slug: string | null;
 }
 
 const heroImage =
@@ -47,7 +48,7 @@ export default async function Home() {
 
   const [catRes, prodRes] = await Promise.all([
     supabase.from("categories").select("*"),
-    supabase.from("products").select("*, categories(name, slug)").limit(24),
+    supabase.from("product_catalog").select("*").limit(24),
   ]);
 
   const categories = (catRes.data || []) as Category[];
@@ -64,7 +65,7 @@ export default async function Home() {
           id: product.id,
           name: product.name,
           price: product.price,
-          image: product.image_url,
+          image: product.image_url || heroImage,
           category: category.name,
         })),
     }))
@@ -145,7 +146,7 @@ export default async function Home() {
               >
                 <div className="relative aspect-[4/3] overflow-hidden">
                   <Image
-                    src={category.lead.image}
+                    src={category.lead.image || heroImage}
                     alt={category.name}
                     fill
                     sizes="(max-width: 1024px) 100vw, 33vw"
@@ -197,7 +198,7 @@ export default async function Home() {
                 >
                   <div className="relative h-20 w-20 overflow-hidden rounded-[1.5rem] bg-white/70">
                     <Image
-                      src={product.image_url}
+                      src={product.image_url || heroImage}
                       alt={product.name}
                       fill
                       sizes="80px"
@@ -212,7 +213,7 @@ export default async function Home() {
                       {product.name}
                     </h3>
                     <p className="mt-1 text-sm text-[var(--forest-700)]">
-                      {currencyFormatter.format(product.price)}
+                      {currencyFormatter.format(product.price)} / kg
                     </p>
                   </div>
                 </div>

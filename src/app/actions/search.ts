@@ -4,25 +4,24 @@ import { createClient } from "@/utils/supabase/server";
 
 export async function searchProducts(query: string) {
   if (!query || query.trim() === "") return [];
-  
+
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from('products')
-    .select('id, name, price, image_url, category_id, categories(name)')
-    .ilike('name', `%${query}%`)
+    .from("product_catalog")
+    .select("id, name, price, image_url, category_name")
+    .ilike("name", `%${query}%`)
     .limit(5);
 
   if (error) {
     console.error("Search error:", error);
     return [];
   }
-  return data.map(p => ({
-    id: p.id,
-    name: p.name,
-    price: p.price,
-    image_url: p.image_url,
-    category: Array.isArray(p.categories) 
-      ? (p.categories[0] as { name: string } | undefined)?.name || 'Uncategorized'
-      : (p.categories as { name: string } | null)?.name || 'Uncategorized'
+
+  return data.map((product) => ({
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    image_url: product.image_url,
+    category: product.category_name || "Uncategorized",
   }));
 }

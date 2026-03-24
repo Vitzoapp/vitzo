@@ -26,9 +26,10 @@ import Image from "next/image";
 interface Product {
   id: string;
   name: string;
-  price: number;
+  real_price: number;
+  commission: number;
+  final_price: number;
   category_id: string | null;
-  stock: number | null;
   image_url: string | null;
   categories?: { name: string } | { name: string }[] | null;
 }
@@ -50,6 +51,19 @@ interface Agent {
   is_active: boolean | null;
 }
 
+interface ActiveOrder {
+  id: string;
+  created_at: string | null;
+  total_amount: number;
+  delivery_status: string | null;
+  shipping_area: string | null;
+  shipping_house_no: string | null;
+  shipping_street: string | null;
+  mobile_number: string | null;
+  agents: { full_name: string } | null;
+  order_items: { id: string; quantity: number }[];
+}
+
 export default function AdminPortal() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,11 +73,17 @@ export default function AdminPortal() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [activeOrders, setActiveOrders] = useState<ActiveOrder[]>([]);
+  const [totalProfit, setTotalProfit] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [adminError, setAdminError] = useState<string | null>(null);
+  const [draftRealPrice, setDraftRealPrice] = useState(0);
+  const [draftCommission, setDraftCommission] = useState(0);
 
   useEffect(() => {
+    let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
+
     const checkAdmin = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -81,6 +101,15 @@ export default function AdminPortal() {
       if (profile?.role === 'admin') {
         setUser(session.user);
         fetchData();
+        realtimeChannel = supabase
+          .channel("admin-live-orders")
+          .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
+            fetchData();
+          })
+          .on("postgres_changes", { event: "*", schema: "public", table: "agents" }, () => {
+            fetchData();
+          })
+          .subscribe();
       }
       setLoading(false);
     };
@@ -90,23 +119,56 @@ export default function AdminPortal() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      if (realtimeChannel) {
+        supabase.removeChannel(realtimeChannel);
+      }
+    };
   }, []);
+
+  useEffect(() => {
+    if (!isModalOpen) {
+      return;
+    }
+
+    setDraftRealPrice(editingProduct?.real_price ?? 0);
+    setDraftCommission(editingProduct?.commission ?? 0);
+  }, [editingProduct, isModalOpen]);
 
   const fetchData = async () => {
     setLoading(true);
     setAdminError(null);
-    const [productsRes, categoriesRes, agentsRes] = await Promise.all([
+    const [productsRes, categoriesRes, agentsRes, activeOrdersRes, profitRes] = await Promise.all([
       supabase.from('products').select('*, categories(name)').order('created_at', { ascending: false }),
       supabase.from('categories').select('*'),
-      supabase.from('agents').select('*').order('created_at', { ascending: false })
+      supabase.from('agents').select('*').order('created_at', { ascending: false }),
+      supabase
+        .from("orders")
+        .select(`
+          id,
+          created_at,
+          total_amount,
+          delivery_status,
+          shipping_area,
+          shipping_house_no,
+          shipping_street,
+          mobile_number,
+          agents (full_name),
+          order_items (id, quantity)
+        `)
+        .neq("delivery_status", "delivered")
+        .order("created_at", { ascending: false }),
+      supabase.rpc("get_total_delivered_profit")
     ]);
 
-    if (productsRes.error || categoriesRes.error || agentsRes.error) {
+    if (productsRes.error || categoriesRes.error || agentsRes.error || activeOrdersRes.error || profitRes.error) {
       setAdminError(
         productsRes.error?.message ||
           categoriesRes.error?.message ||
           agentsRes.error?.message ||
+          activeOrdersRes.error?.message ||
+          profitRes.error?.message ||
           "Failed to load admin data.",
       );
     }
@@ -114,6 +176,8 @@ export default function AdminPortal() {
     if (productsRes.data) setProducts(productsRes.data);
     if (categoriesRes.data) setCategories(categoriesRes.data);
     if (agentsRes.data) setAgents(agentsRes.data);
+    if (activeOrdersRes.data) setActiveOrders(activeOrdersRes.data);
+    if (typeof profitRes.data === "number") setTotalProfit(profitRes.data);
     setLoading(false);
   };
 
@@ -159,9 +223,9 @@ export default function AdminPortal() {
     const formData = new FormData(e.currentTarget);
     const productData = {
       name: formData.get("name") as string,
-      price: Number(formData.get("price")),
+      real_price: Number(formData.get("real_price")),
+      commission: Number(formData.get("commission")),
       category_id: formData.get("category_id") as string,
-      stock: Number(formData.get("stock")),
       image_url: imagePreview || (formData.get("image_url") as string),
     };
 
@@ -262,7 +326,12 @@ export default function AdminPortal() {
         )}
 
         {activeTab === "dashboard" && (
-           <DashboardContent productsCount={products.length} agentsCount={agents.length} />
+           <DashboardContent
+             productsCount={products.length}
+             agentsCount={agents.length}
+             activeOrders={activeOrders}
+             totalProfit={totalProfit}
+           />
         )}
 
         {activeTab === "products" && (
@@ -272,7 +341,7 @@ export default function AdminPortal() {
                   <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Inventory Flux</h2>
                   <p className="text-slate-400 font-bold">Manage real-time grocery synchronization.</p>
                </div>
-               <button onClick={() => { setEditingProduct(null); setIsModalOpen(true); }} className="bg-slate-900 text-white px-8 py-4 rounded-3xl font-black uppercase text-sm italic shadow-xl hover:scale-105 active:scale-95 transition-all">Register Product</button>
+               <button onClick={() => { setEditingProduct(null); setDraftRealPrice(0); setDraftCommission(0); setIsModalOpen(true); }} className="bg-slate-900 text-white px-8 py-4 rounded-3xl font-black uppercase text-sm italic shadow-xl hover:scale-105 active:scale-95 transition-all">Register Product</button>
             </header>
 
             <div className="bg-white rounded-[40px] shadow-2xl shadow-slate-200 border border-gray-100 overflow-hidden">
@@ -281,7 +350,7 @@ export default function AdminPortal() {
                      <tr>
                         <th className="p-8 text-[11px] font-black uppercase text-slate-400">Identification</th>
                         <th className="p-8 text-[11px] font-black uppercase text-slate-400">Classification</th>
-                        <th className="p-8 text-[11px] font-black uppercase text-slate-400">Stock</th>
+                        <th className="p-8 text-[11px] font-black uppercase text-slate-400">Pricing</th>
                         <th className="p-8 text-[11px] font-black uppercase text-slate-400 text-right">Operations</th>
                      </tr>
                   </thead>
@@ -296,9 +365,12 @@ export default function AdminPortal() {
                           <td className="p-8">
                              <span className="px-3 py-1 bg-white border rounded-full text-[10px] font-black uppercase text-slate-400">{getCategoryName(p.categories)}</span>
                           </td>
-                          <td className="p-8 font-black">{p.stock ?? 0}</td>
+                          <td className="p-8">
+                             <p className="font-black text-slate-900">₹{p.final_price}</p>
+                             <p className="text-xs font-bold text-slate-400">₹{p.real_price} + ₹{p.commission}</p>
+                          </td>
                           <td className="p-8 text-right space-x-2">
-                             <button onClick={() => { setEditingProduct(p); setIsModalOpen(true); }} className="p-3 bg-white border rounded-xl hover:bg-slate-100"><Edit className="h-4 w-4" /></button>
+                             <button onClick={() => { setEditingProduct(p); setDraftRealPrice(p.real_price); setDraftCommission(p.commission); setIsModalOpen(true); }} className="p-3 bg-white border rounded-xl hover:bg-slate-100"><Edit className="h-4 w-4" /></button>
                              <button onClick={() => handleDeleteProduct(p.id)} className="p-3 bg-white border rounded-xl hover:bg-red-50 text-red-500"><Trash2 className="h-4 w-4" /></button>
                           </td>
                        </tr>
@@ -397,8 +469,8 @@ export default function AdminPortal() {
                        <input name="name" required defaultValue={editingProduct?.name} className="w-full h-14 bg-gray-50 border-2 border-gray-50 rounded-2xl px-4 font-bold focus:bg-white focus:border-[var(--color-primary-green)] outline-none" />
                     </div>
                     <div className="space-y-2">
-                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Price (INR)</label>
-                       <input name="price" type="number" step="0.01" required defaultValue={editingProduct?.price} className="w-full h-14 bg-gray-50 border-2 border-gray-50 rounded-2xl px-4 font-bold focus:bg-white focus:border-[var(--color-primary-green)] outline-none" />
+                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Real Price (INR)</label>
+                       <input name="real_price" type="number" step="0.01" required value={draftRealPrice} onChange={(event) => setDraftRealPrice(Number(event.target.value) || 0)} className="w-full h-14 bg-gray-50 border-2 border-gray-50 rounded-2xl px-4 font-bold focus:bg-white focus:border-[var(--color-primary-green)] outline-none" />
                     </div>
                  </div>
 
@@ -410,9 +482,16 @@ export default function AdminPortal() {
                        </select>
                     </div>
                     <div className="space-y-2">
-                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Stock Units</label>
-                       <input name="stock" type="number" required defaultValue={editingProduct?.stock ?? 0} className="w-full h-14 bg-gray-50 border-2 border-gray-50 rounded-2xl px-4 font-bold focus:bg-white focus:border-[var(--color-primary-green)] outline-none" />
+                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Commission (INR)</label>
+                       <input name="commission" type="number" step="0.01" required value={draftCommission} onChange={(event) => setDraftCommission(Number(event.target.value) || 0)} className="w-full h-14 bg-gray-50 border-2 border-gray-50 rounded-2xl px-4 font-bold focus:bg-white focus:border-[var(--color-primary-green)] outline-none" />
                     </div>
+                 </div>
+
+                 <div className="rounded-[1.75rem] border border-gray-100 bg-gray-50 px-5 py-5">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Customer-facing final price</p>
+                    <p className="mt-2 text-3xl font-black italic tracking-tight text-slate-900">
+                      ₹{(draftRealPrice + draftCommission).toFixed(2)}
+                    </p>
                  </div>
 
                  <div className="space-y-2">
@@ -455,18 +534,118 @@ function SidebarItem({ icon, label, active, onClick }: { icon: React.ReactNode, 
   );
 }
 
-function DashboardContent({ productsCount, agentsCount }: { productsCount: number, agentsCount: number }) {
+function DashboardContent({
+  productsCount,
+  agentsCount,
+  activeOrders,
+  totalProfit,
+}: {
+  productsCount: number;
+  agentsCount: number;
+  activeOrders: ActiveOrder[];
+  totalProfit: number;
+}) {
   return (
     <>
       <header className="mb-12">
          <h2 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">Control Node</h2>
-         <p className="text-slate-400 font-bold">System metrics and operational status overview.</p>
+         <p className="text-slate-400 font-bold">Live profit, fleet readiness, and undelivered order activity.</p>
       </header>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+      <section className="overflow-hidden rounded-[2.9rem] bg-[linear-gradient(135deg,#173127_0%,#29463b_46%,#ffd84d_100%)] px-8 py-10 text-white shadow-[0_30px_70px_rgba(23,49,39,0.18)]">
+         <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">Delivered profit</p>
+         <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+               <p className="text-6xl font-black italic tracking-tighter">₹{totalProfit.toFixed(2)}</p>
+               <p className="mt-3 max-w-xl text-sm font-bold text-white/72">
+                 Commission is counted only after delivery is completed, so this number tracks realized profit instead of pending revenue.
+               </p>
+            </div>
+            <div className="rounded-[1.8rem] border border-white/14 bg-white/10 px-5 py-4 text-sm font-bold text-white/75">
+              Recomputed from delivered order items in real time.
+            </div>
+         </div>
+      </section>
+
+      <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-8">
          <StatCard label="Product Inventory" value={productsCount.toString()} sub="Unique Assets" />
          <StatCard label="Active Fleet" value={agentsCount.toString()} sub="Delivery Units" />
-         <StatCard label="Service Score" value="4.9" sub="Average Rating" />
+         <StatCard label="Live Orders" value={activeOrders.length.toString()} sub="Undelivered" />
       </div>
+
+      <section className="mt-10 overflow-hidden rounded-[2.5rem] border border-gray-100 bg-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-gray-100 px-8 py-6">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-400">Status View</p>
+            <h3 className="mt-2 text-2xl font-black uppercase italic tracking-tight text-slate-900">
+              Live orders in motion
+            </h3>
+          </div>
+          <span className="rounded-full bg-amber-100 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-amber-800">
+            {activeOrders.length} active
+          </span>
+        </div>
+
+        {activeOrders.length === 0 ? (
+          <div className="px-8 py-16 text-center">
+            <Truck className="mx-auto h-12 w-12 text-slate-300" />
+            <p className="mt-4 text-lg font-black uppercase italic text-slate-500">
+              No undelivered orders right now
+            </p>
+            <p className="mt-2 text-sm font-bold text-slate-400">
+              New checkouts and agent updates will appear here automatically.
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {activeOrders.map((order) => (
+              <div key={order.id} className="grid gap-5 px-8 py-6 lg:grid-cols-[1.1fr_0.7fr_0.55fr_0.65fr] lg:items-center">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
+                    Order #{order.id.slice(0, 8)}
+                  </p>
+                  <p className="mt-2 text-lg font-black text-slate-900">
+                    {order.shipping_house_no || "Address pending"}, {order.shipping_street || "street pending"}
+                  </p>
+                  <p className="mt-1 text-sm font-bold text-slate-500">
+                    {order.shipping_area || "Area pending"} • {order.mobile_number || "Phone pending"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
+                    Assignment
+                  </p>
+                  <p className="mt-2 text-sm font-black text-slate-900">
+                    {order.agents?.full_name || "Waiting for auto-assignment"}
+                  </p>
+                  <p className="mt-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                    {order.order_items.length} items
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
+                    Total
+                  </p>
+                  <p className="mt-2 text-lg font-black text-slate-900">
+                    ₹{order.total_amount}
+                  </p>
+                </div>
+
+                <div className="lg:text-right">
+                  <span className={`inline-flex rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] ${getOrderStatusTone(order.delivery_status)}`}>
+                    {formatDeliveryStatus(order.delivery_status)}
+                  </span>
+                  <p className="mt-2 text-xs font-bold text-slate-400">
+                    {order.created_at ? new Date(order.created_at).toLocaleString("en-IN") : "Recent order"}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </>
   );
 }
@@ -487,4 +666,24 @@ function getCategoryName(category: Product["categories"]) {
   }
 
   return category?.name ?? "Uncategorized";
+}
+
+function formatDeliveryStatus(status: string | null) {
+  return (status ?? "pending").replaceAll("_", " ");
+}
+
+function getOrderStatusTone(status: string | null) {
+  if (status === "assigned") {
+    return "bg-blue-100 text-blue-800";
+  }
+
+  if (status === "out_for_delivery") {
+    return "bg-amber-100 text-amber-800";
+  }
+
+  if (status === "ready_for_pickup") {
+    return "bg-emerald-100 text-emerald-800";
+  }
+
+  return "bg-slate-100 text-slate-700";
 }

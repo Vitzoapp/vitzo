@@ -15,10 +15,12 @@ import {
   Plus,
   ShoppingBag,
   Trash2,
+  Wallet,
   Zap,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { supabase } from "@/lib/supabase";
+import { formatWeightLabel } from "@/lib/pricing";
 
 interface Profile {
   id: string;
@@ -28,6 +30,11 @@ interface Profile {
   street: string | null;
   landmark: string | null;
   area: string | null;
+}
+
+interface WalletAccount {
+  balance: number;
+  user_id: string;
 }
 
 const ALLOWED_AREAS = ["Ramanattukara", "Azhinjilam", "Farook College"];
@@ -44,20 +51,28 @@ export default function CartPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [wallet, setWallet] = useState<WalletAccount | null>(null);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "upi">("cod");
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [useWallet, setUseWallet] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async (userId: string) => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
-      if (data) {
-        setProfile(data);
+      const [profileRes, walletRes] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", userId).single(),
+        supabase.from("wallets").select("*").eq("user_id", userId).single(),
+      ]);
+
+      if (profileRes.data) {
+        setProfile(profileRes.data);
+      }
+
+      if (walletRes.data) {
+        setWallet(walletRes.data);
+      } else {
+        setWallet({ user_id: userId, balance: 0 });
       }
     };
 
@@ -109,10 +124,11 @@ export default function CartPage() {
         p_mobile_number: profile?.mobile_number ?? "",
         p_payment_method:
           paymentMethod === "cod" ? "cash_on_delivery" : "online_upi",
+        p_wallet_amount_requested: walletAmountToApply,
         p_items: cart.map((item) => ({
-          product_id: item.id,
+          product_id: item.productId,
           quantity: item.quantity,
-          price: item.price,
+          weight_grams: item.weightInGrams,
         })),
       },
     );
@@ -124,6 +140,9 @@ export default function CartPage() {
     }
 
     if (orderId) {
+      setWallet((prev) =>
+        prev ? { ...prev, balance: Math.max(prev.balance - walletAmountToApply, 0) } : prev,
+      );
       clearCart();
       setStep(4);
     }
@@ -157,6 +176,9 @@ export default function CartPage() {
   const isAreaAllowed = profile?.area
     ? ALLOWED_AREAS.includes(profile.area)
     : false;
+  const walletBalance = wallet?.balance ?? 0;
+  const walletAmountToApply = useWallet ? Math.min(walletBalance, totalPrice) : 0;
+  const finalPayable = Math.max(totalPrice - walletAmountToApply, 0);
 
   return (
     <div className="min-h-[calc(100svh-5rem)] bg-[var(--background)] px-4 py-14 sm:px-6 lg:px-8">
@@ -233,7 +255,7 @@ export default function CartPage() {
                           {item.name}
                         </h3>
                         <p className="mt-2 text-sm text-[var(--forest-700)]">
-                          {currencyFormatter.format(item.price)} each
+                          {currencyFormatter.format(item.unitPrice)} for {formatWeightLabel(item.weightInGrams)}
                         </p>
                       </div>
                       <div className="flex items-center justify-between gap-4 md:block md:text-right">
@@ -256,7 +278,7 @@ export default function CartPage() {
                         </div>
                         <div className="mt-3 flex items-center justify-end gap-4">
                           <p className="text-lg font-semibold text-[var(--forest-950)]">
-                            {currencyFormatter.format(item.price * item.quantity)}
+                            {currencyFormatter.format(item.unitPrice * item.quantity)}
                           </p>
                           <button
                             onClick={() => removeFromCart(item.id)}
@@ -375,6 +397,36 @@ export default function CartPage() {
                     {checkoutError}
                   </div>
                 )}
+                <div className="mt-6 rounded-[2rem] border border-[var(--line-soft)] bg-[var(--surface-soft)] p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-[var(--accent-deep)]">
+                        Vitzo Wallet
+                      </p>
+                      <h3 className="mt-2 text-xl font-semibold text-[var(--forest-950)]">
+                        {currencyFormatter.format(walletBalance)} available
+                      </h3>
+                      <p className="mt-2 text-sm leading-6 text-[var(--forest-700)]">
+                        Apply your wallet first and pay only the remaining balance with COD or UPI.
+                      </p>
+                    </div>
+                    <Wallet className="h-6 w-6 text-[var(--accent-deep)]" />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setUseWallet((current) => !current)}
+                    disabled={walletBalance <= 0}
+                    className={`mt-5 inline-flex min-h-12 w-full items-center justify-between rounded-full px-5 text-sm font-semibold transition ${
+                      useWallet
+                        ? "bg-[var(--accent-deep)] text-white"
+                        : "border border-[var(--line-soft)] bg-white text-[var(--forest-950)]"
+                    } ${walletBalance <= 0 ? "cursor-not-allowed opacity-60" : ""}`}
+                  >
+                    <span>{useWallet ? "Wallet applied" : "Apply wallet balance"}</span>
+                    <span>{currencyFormatter.format(walletAmountToApply)}</span>
+                  </button>
+                </div>
                 <div className="mt-6 space-y-4">
                   <PaymentOption
                     active={paymentMethod === "cod"}
@@ -407,7 +459,9 @@ export default function CartPage() {
                     {loading && (
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     )}
-                    Pay {currencyFormatter.format(totalPrice)}
+                    {finalPayable === 0
+                      ? "Place order"
+                      : `Pay ${currencyFormatter.format(finalPayable)}`}
                   </button>
                 </div>
               </section>
@@ -454,16 +508,20 @@ export default function CartPage() {
                     <span>{currencyFormatter.format(totalPrice)}</span>
                   </div>
                   <div className="flex items-center justify-between text-white/72">
+                    <span>Wallet deduction</span>
+                    <span>{walletAmountToApply > 0 ? `-${currencyFormatter.format(walletAmountToApply)}` : currencyFormatter.format(0)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-white/72">
                     <span>Delivery</span>
                     <span className="text-[var(--accent)]">Free</span>
                   </div>
                 </div>
                 <div className="mt-6 border-t border-white/12 pt-6">
                   <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-white/55">
-                    Total
+                    Final payable
                   </p>
                   <p className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-white">
-                    {currencyFormatter.format(totalPrice)}
+                    {currencyFormatter.format(finalPayable)}
                   </p>
                 </div>
 
@@ -506,6 +564,18 @@ function getCheckoutErrorMessage(message: string) {
 
   if (message === "CART_EMPTY") {
     return "Your basket is empty. Add products before checking out.";
+  }
+
+  if (message === "INSUFFICIENT_WALLET_BALANCE") {
+    return "Your Vitzo Wallet balance is lower than the amount you tried to apply.";
+  }
+
+  if (message === "WALLET_EXCEEDS_TOTAL") {
+    return "Wallet usage cannot be higher than the order subtotal.";
+  }
+
+  if (message === "INVALID_WALLET_AMOUNT") {
+    return "The wallet amount requested for this order is invalid.";
   }
 
   return message;

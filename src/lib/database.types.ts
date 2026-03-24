@@ -102,6 +102,122 @@ export interface Database {
         };
         Relationships: [];
       };
+      wallets: {
+        Row: {
+          balance: number;
+          created_at: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          balance?: number;
+          created_at?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          balance?: number;
+          created_at?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      referrals: {
+        Row: {
+          created_at: string;
+          id: string;
+          referred_id: string;
+          referral_code_used: string;
+          referrer_id: string;
+          reward_amount: number;
+          reward_order_id: string | null;
+          rewarded_at: string | null;
+          status: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          referred_id: string;
+          referral_code_used: string;
+          referrer_id: string;
+          reward_amount?: number;
+          reward_order_id?: string | null;
+          rewarded_at?: string | null;
+          status?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          referred_id?: string;
+          referral_code_used?: string;
+          referrer_id?: string;
+          reward_amount?: number;
+          reward_order_id?: string | null;
+          rewarded_at?: string | null;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "referrals_reward_order_id_fkey";
+            columns: ["reward_order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      wallet_transactions: {
+        Row: {
+          amount: number;
+          created_at: string;
+          description: string | null;
+          id: string;
+          order_id: string | null;
+          referral_id: string | null;
+          source_type: string;
+          transaction_type: string;
+          wallet_user_id: string;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          order_id?: string | null;
+          referral_id?: string | null;
+          source_type: string;
+          transaction_type: string;
+          wallet_user_id: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          order_id?: string | null;
+          referral_id?: string | null;
+          source_type?: string;
+          transaction_type?: string;
+          wallet_user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "wallet_transactions_referral_id_fkey";
+            columns: ["referral_id"];
+            isOneToOne: false;
+            referencedRelation: "referrals";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       categories: {
         Row: {
           created_at: string | null;
@@ -125,28 +241,40 @@ export interface Database {
       };
       order_items: {
         Row: {
+          commission_per_kg: number;
           created_at: string | null;
+          final_price_per_kg: number;
           id: string;
           order_id: string | null;
           price_at_time_of_order: number;
           product_id: string | null;
           quantity: number;
+          real_price_per_kg: number;
+          selected_weight_grams: number;
         };
         Insert: {
+          commission_per_kg?: number;
           created_at?: string | null;
+          final_price_per_kg?: number;
           id?: string;
           order_id?: string | null;
           price_at_time_of_order: number;
           product_id?: string | null;
           quantity: number;
+          real_price_per_kg?: number;
+          selected_weight_grams?: number;
         };
         Update: {
+          commission_per_kg?: number;
           created_at?: string | null;
+          final_price_per_kg?: number;
           id?: string;
           order_id?: string | null;
           price_at_time_of_order?: number;
           product_id?: string | null;
           quantity?: number;
+          real_price_per_kg?: number;
+          selected_weight_grams?: number;
         };
         Relationships: [
           {
@@ -171,10 +299,12 @@ export interface Database {
           created_at: string | null;
           delivery_pin: string | null;
           delivery_status: string | null;
+          final_amount_due: number;
           id: string;
           mobile_number: string | null;
           payment_method: string | null;
           payment_status: string | null;
+          referral_reward_processed: boolean;
           shipping_area: string | null;
           shipping_house_no: string | null;
           shipping_landmark: string | null;
@@ -182,16 +312,19 @@ export interface Database {
           status: string | null;
           total_amount: number;
           user_id: string | null;
+          wallet_amount_used: number;
         };
         Insert: {
           agent_id?: string | null;
           created_at?: string | null;
           delivery_pin?: string | null;
           delivery_status?: string | null;
+          final_amount_due?: number;
           id?: string;
           mobile_number?: string | null;
           payment_method?: string | null;
           payment_status?: string | null;
+          referral_reward_processed?: boolean;
           shipping_area?: string | null;
           shipping_house_no?: string | null;
           shipping_landmark?: string | null;
@@ -199,16 +332,19 @@ export interface Database {
           status?: string | null;
           total_amount: number;
           user_id?: string | null;
+          wallet_amount_used?: number;
         };
         Update: {
           agent_id?: string | null;
           created_at?: string | null;
           delivery_pin?: string | null;
           delivery_status?: string | null;
+          final_amount_due?: number;
           id?: string;
           mobile_number?: string | null;
           payment_method?: string | null;
           payment_status?: string | null;
+          referral_reward_processed?: boolean;
           shipping_area?: string | null;
           shipping_house_no?: string | null;
           shipping_landmark?: string | null;
@@ -216,6 +352,7 @@ export interface Database {
           status?: string | null;
           total_amount?: number;
           user_id?: string | null;
+          wallet_amount_used?: number;
         };
         Relationships: [
           {
@@ -230,36 +367,39 @@ export interface Database {
       products: {
         Row: {
           category_id: string | null;
+          commission: number;
           created_at: string | null;
           description: string | null;
+          final_price: number;
           id: string;
           image_url: string | null;
           name: string;
-          price: number;
+          real_price: number;
           specifications: Json | null;
-          stock: number | null;
         };
         Insert: {
           category_id?: string | null;
+          commission?: number;
           created_at?: string | null;
           description?: string | null;
+          final_price?: never;
           id?: string;
           image_url?: string | null;
           name: string;
-          price: number;
+          real_price: number;
           specifications?: Json | null;
-          stock?: number | null;
         };
         Update: {
           category_id?: string | null;
+          commission?: number;
           created_at?: string | null;
           description?: string | null;
+          final_price?: never;
           id?: string;
           image_url?: string | null;
           name?: string;
-          price?: number;
+          real_price?: number;
           specifications?: Json | null;
-          stock?: number | null;
         };
         Relationships: [
           {
@@ -280,6 +420,7 @@ export interface Database {
           id: string;
           landmark: string | null;
           mobile_number: string | null;
+          referral_code: string | null;
           role: string | null;
           street: string | null;
           updated_at: string | null;
@@ -292,6 +433,7 @@ export interface Database {
           id: string;
           landmark?: string | null;
           mobile_number?: string | null;
+          referral_code?: string | null;
           role?: string | null;
           street?: string | null;
           updated_at?: string | null;
@@ -304,6 +446,7 @@ export interface Database {
           id?: string;
           landmark?: string | null;
           mobile_number?: string | null;
+          referral_code?: string | null;
           role?: string | null;
           street?: string | null;
           updated_at?: string | null;
@@ -311,8 +454,29 @@ export interface Database {
         Relationships: [];
       };
     };
-    Views: Record<string, never>;
+    Views: {
+      product_catalog: {
+        Row: {
+          category_id: string | null;
+          category_name: string | null;
+          category_slug: string | null;
+          created_at: string | null;
+          description: string | null;
+          final_price: number;
+          id: string;
+          image_url: string | null;
+          name: string;
+          price: number;
+          specifications: Json | null;
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
+      get_total_delivered_profit: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
       process_checkout: {
         Args: {
           p_items: Json;
@@ -323,8 +487,15 @@ export interface Database {
           p_shipping_landmark: string;
           p_shipping_street: string;
           p_total_amount: number;
+          p_wallet_amount_requested: number;
         };
         Returns: string;
+      };
+      register_referral: {
+        Args: {
+          p_referral_code: string;
+        };
+        Returns: undefined;
       };
       verify_delivery_pin: {
         Args: {

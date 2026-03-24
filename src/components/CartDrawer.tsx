@@ -4,6 +4,7 @@ import { X, Plus, Minus, ShoppingBag } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { formatWeightLabel } from "@/lib/pricing";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -71,8 +72,11 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                       <div className="flex flex-1 flex-col">
                         <div className="flex justify-between">
                           <h4 className="font-bold text-slate-900">{item.name}</h4>
-                          <p className="font-bold text-slate-900">₹{item.price.toLocaleString("en-IN")}</p>
+                          <p className="font-bold text-slate-900">₹{item.unitPrice.toLocaleString("en-IN")}</p>
                         </div>
+                        <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                          {formatWeightLabel(item.weightInGrams)}
+                        </p>
                         <div className="mt-auto flex items-center justify-between">
                           <div className="flex items-center gap-3 rounded-full border border-gray-100 bg-gray-50 px-3 py-1">
                             <button 

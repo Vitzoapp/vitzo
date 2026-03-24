@@ -242,6 +242,7 @@ export default function Navbar() {
             <MobileNavItem href="/products" label="Shop" onClick={() => setIsMenuOpen(false)} />
             <MobileNavItem href="/categories" label="Categories" onClick={() => setIsMenuOpen(false)} />
             {user && <MobileNavItem href="/orders" label="Orders" onClick={() => setIsMenuOpen(false)} />}
+            {user && <MobileNavItem href="/profile" label="Profile" onClick={() => setIsMenuOpen(false)} />}
             {agent && (
               <MobileNavItem
                 href="/agent/dashboard"
